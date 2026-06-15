@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AssetsX | Stock Details</title>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- CRUCIAL: Add Chart.js CDN for interactive charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body data-page="stock">
+    <div class="app-shell">
+      <!-- Sidebar: Shared across all app pages -->
+      <aside class="sidebar">
+        <a class="brand" href="home.html">
+          <span class="brand-mark">X</span>
+          <span class="brand-name">AssetsX</span>
+        </a>
+        <nav class="side-nav">
+          <a class="nav-link" href="home.html"><span class="nav-icon">⌁</span><span>Home</span></a>
+          <a class="nav-link" href="markets.html"><span class="nav-icon">⌁</span><span>Markets</span></a>
+          <a class="nav-link" href="portfolio.html"><span class="nav-icon">▰</span><span>Portfolio</span></a>
+          <a class="nav-link" href="news.html"><span class="nav-icon">≡</span><span>News</span></a>
+          <a class="nav-link" href="pro.html"><span class="nav-icon">⌙</span><span>Pro</span></a>
+          <a class="nav-link" href="signin.html" data-action="logout"><span class="nav-icon">⎋</span><span>Logout</span></a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <!-- Topbar: Context-aware title updated by main.js -->
+        <header class="topbar">
+          <div>
+            <h1 class="page-title" id="stock-title">Stock Details</h1>
+            <div id="header-subtitle" class="page-subtitle">Loading...</div>
+          </div>
+          <div class="top-actions">
+            <input class="search" type="search" placeholder="Search..." />
+            <button class="btn primary" data-action="trade">Trade</button>
+          </div>
+        </header>
+
+        <section class="content">
+          <!-- Stock Hero: Logo, Symbol, Company Name, and Prices -->
+          <section id="stock-hero" class="card stock-hero">
+            <!-- Filled by main.js -->
+          </section>
+
+          <!-- Quick Stats: Today's trading range at a glance -->
+          <div id="stock-quick-stats" class="quick-stats-grid">
+            <!-- Filled by main.js -->
+          </div>
+
+          <!-- Detailed Stats and Historical Chart -->
+          <section class="stock-grid">
+            <article class="card chart-card">
+              <div class="card-head">
+                <h3>Price Chart</h3>
+                <div class="range-tabs">
+                  <span class="pill active">1M</span>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="stockChart" class="chart"></canvas>
+              </div>
+            </article>
+
+            <!-- Key Statistics Sidebar -->
+            <aside class="card stat-list" id="stat-list">
+              <h3>Key Statistics</h3>
+              <div id="stat-rows">
+                <!-- Filled by main.js -->
+              </div>
+            </aside>
+          </section>
+
+          <!-- Company Profile -->
+          <article class="card about-card">
+            <h3>About</h3>
+            <div id="stock-about" class="about-grid">
+              <!-- Filled by main.js -->
+            </div>
+          </article>
+
+          <!-- Company-specific News Feed -->
+          <div class="dashboard-head compact">
+            <h2>Related News</h2>
+          </div>
+          <div id="stock-news-container" class="news-grid two">
+            <!-- News filled by main.js -->
+          </div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AssetsX | Markets</title>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Load Chart.js for transitions back to dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body data-page="markets">
+    <div class="app-shell">
+      <!-- Sidebar: Global navigation menu -->
+      <aside class="sidebar">
+        <a class="brand" href="home.html">
+          <span class="brand-mark">X</span>
+          <span class="brand-name">AssetsX</span>
+        </a>
+        <nav class="side-nav">
+          <a class="nav-link" href="home.html"><span class="nav-icon">⌁</span><span>Home</span></a>
+          <a class="nav-link active" href="markets.html"><span class="nav-icon">⌁</span><span>Markets</span></a>
+          <a class="nav-link" href="portfolio.html"><span class="nav-icon">▰</span><span>Portfolio</span></a>
+          <a class="nav-link" href="news.html"><span class="nav-icon">≡</span><span>News</span></a>
+          <a class="nav-link" href="pro.html"><span class="nav-icon">⌙</span><span>Pro</span></a>
+          <a class="nav-link" href="signin.html" data-action="logout"><span class="nav-icon">⎋</span><span>Logout</span></a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <!-- Topbar: Page title and global search -->
+        <header class="topbar">
+          <div>
+            <h1 class="page-title">Markets</h1>
+            <div id="header-subtitle" class="page-subtitle">Loading market context...</div>
+          </div>
+          <div class="top-actions">
+            <input class="search" type="search" placeholder="Search..." />
+          </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <section class="content">
+          <div class="dashboard-head compact">
+            <h2>Live Market Prices</h2>
+            <p>Track current prices with real-time green and red market states.</p>
+          </div>
+
+          <!-- Filtering and Search functionality -->
+          <div class="filter-bar">
+            <input class="market-search" type="search" placeholder="Search symbol or company..." />
+            <div class="range-tabs">
+              <span class="pill active">All Markets</span>
+              <span class="pill">US Equities</span>
+              <span class="pill">Crypto</span>
+            </div>
+          </div>
+
+          <!-- Markets Data Table -->
+          <article class="card table-card">
+            <table class="market-table">
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Company</th>
+                  <th>Price</th>
+                  <th>Change</th>
+                  <th>Volume</th>
+                  <th>Trend</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="market-table-body">
+                <!-- Filled by main.js -->
+              </tbody>
+            </table>
+          </article>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

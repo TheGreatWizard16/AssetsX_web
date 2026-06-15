@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AssetsX | News</title>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Load Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body data-page="news">
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="home.html">
+          <span class="brand-mark">X</span>
+          <span class="brand-name">AssetsX</span>
+        </a>
+        <nav class="side-nav">
+          <a class="nav-link" href="home.html"><span class="nav-icon">⌁</span><span>Home</span></a>
+          <a class="nav-link" href="markets.html"><span class="nav-icon">⌁</span><span>Markets</span></a>
+          <a class="nav-link" href="portfolio.html"><span class="nav-icon">▰</span><span>Portfolio</span></a>
+          <a class="nav-link active" href="news.html"><span class="nav-icon">≡</span><span>News</span></a>
+          <a class="nav-link" href="pro.html"><span class="nav-icon">⌙</span><span>Pro</span></a>
+          <a class="nav-link" href="signin.html" data-action="logout"><span class="nav-icon">⎋</span><span>Logout</span></a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <h1 class="page-title">News</h1>
+            <div id="header-subtitle" class="page-subtitle">Market updates</div>
+          </div>
+        </header>
+
+        <section class="content">
+          <div class="dashboard-head compact">
+            <h2>Market News</h2>
+            <p>Readable updates grouped by category.</p>
+          </div>
+
+          <!-- News Category Filtering -->
+          <div class="range-tabs news-tabs">
+            <span class="pill active">Trending</span>
+            <span class="pill">Macro</span>
+            <span class="pill">Tech</span>
+            <span class="pill">Crypto</span>
+          </div>
+
+          <!-- News Grid: Populated with articles via main.js newsItems -->
+          <div id="news-grid" class="news-grid two">
+            <!-- News by main.js -->
+          </div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

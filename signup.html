@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AssetsX | Sign Up</title>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Load Chart.js for authentication page mini-charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body data-page="signup">
+    <main class="auth-page">
+      <section class="auth-copy">
+        <a class="brand" href="index.html">
+          <span class="brand-mark">X</span>
+          <span class="brand-name">AssetsX</span>
+        </a>
+        <p>A cleaner web companion to the mobile app.</p>
+        <h1>Create your AssetsX account</h1>
+        <p>Join the next generation of trading with insights synced across devices.</p>
+        <div class="card mini-chart-card">
+          <div class="chart-container">
+            <canvas id="miniChart" class="chart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="card auth-card">
+        <h2>Create account</h2>
+        <p>Start tracking markets in seconds.</p>
+        <form id="signupForm" class="form">
+          <div class="field">
+            <label for="fullname">Full name</label>
+            <input id="fullname" type="text" placeholder="Enter full name" required>
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="text" placeholder="Enter email" required>
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="Password" required>
+          </div>
+          <button class="btn primary" type="submit">Create Account</button>
+        </form>
+        <div class="social-row">
+          <button class="btn" type="button" data-action="social-google">Continue with Google</button>
+          <button class="btn" type="button" data-action="social-apple">Continue with Apple</button>
+        </div>
+        <p class="auth-switch">
+          Already have an account? <a href="signin.html">Sign in</a>
+        </p>
+        <p class="legal">By continuing you agree to AssetsX terms and privacy policy.</p>
+      </section>
+    </main>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
