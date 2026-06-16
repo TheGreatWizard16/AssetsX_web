@@ -20,6 +20,7 @@ import { DEMO_METRICS } from './config.js';
 import { auth } from './firebase.js';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import { showToast } from './utils.js';
+import { getCurrency, setCurrency, CURRENCY_CODES } from './currency.js';
 import {
   renderMetrics,
   renderHomePage,
@@ -111,9 +112,31 @@ function renderCurrentPage(now, monthAgo) {
   }
 }
 
+// Injects a currency selector into .top-actions on every app page.
+// Changing the selection saves the choice and reloads so all prices update.
+function injectCurrencySelector() {
+  const actions = document.querySelector('.top-actions');
+  if (!actions) return;
+
+  const current = getCurrency().code;
+  const select = document.createElement('select');
+  select.className = 'currency-select';
+  select.innerHTML = CURRENCY_CODES.map(code =>
+    `<option value="${code}" ${code === current ? 'selected' : ''}>${code}</option>`
+  ).join('');
+
+  select.addEventListener('change', () => {
+    setCurrency(select.value);
+    location.reload();
+  });
+
+  actions.prepend(select);
+}
+
 // Main app startup.
 function initApp() {
   bindAuthFormSubmit();
+  injectCurrencySelector();
 
   // Show demo metrics right away so the dashboard isn't empty while
   // real data loads.

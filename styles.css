@@ -204,6 +204,24 @@ a {
   outline: none;
 }
 
+.currency-select {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+}
+
+.currency-select:focus {
+  border-color: var(--accent);
+}
+
 .search:focus,
 .field input:focus {
   border-color: var(--accent);

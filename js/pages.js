@@ -15,6 +15,7 @@ import { fetchStockDetails, fetchStockCandles } from './api.js';
 import { initStockChart } from './charts.js';
 import { sparkline, isTrendUp, formatTimeAgo } from './utils.js';
 import { DEMO_HOLDINGS, DEMO_PORTFOLIO_SUMMARY, DEMO_ALLOCATION } from './config.js';
+import { formatWithCurrency, getCurrency } from './currency.js';
 
 /* ----------------------------------------------------------------------
  * Shared UI pieces (used by more than one page)
@@ -70,7 +71,7 @@ function renderWatchlist() {
   container.innerHTML = appState.marketRows.map(([symbol, name, price, change]) => `
     <div class="watch-row" data-symbol="${symbol}">
       <span class="watch-symbol">${symbol}</span><span class="watch-name">${name}</span>
-      ${sparkline(isTrendUp(change))}<span class="price">${price}<small class="${isTrendUp(change) ? 'up' : 'down'}">${change}</small></span>
+      ${sparkline(isTrendUp(change))}<span class="price">${convertPriceString(price)}<small class="${isTrendUp(change) ? 'up' : 'down'}">${change}</small></span>
     </div>`).join("");
 }
 
@@ -103,6 +104,12 @@ export function renderHomePage(now, monthAgo) {
  * Markets page
  * ------------------------------------------------------------------- */
 
+// Converts a "$173.50" USD price string to the selected currency.
+function convertPriceString(priceStr) {
+  const usd = parseFloat(priceStr.replace(/[$,]/g, ''));
+  return isNaN(usd) ? priceStr : formatWithCurrency(usd);
+}
+
 // Fills the live market price table.
 export function renderMarketsPage() {
   const tbody = document.getElementById('market-table-body');
@@ -110,9 +117,12 @@ export function renderMarketsPage() {
 
   tbody.innerHTML = appState.marketRows.map(([symbol, name, price, change, volume]) => `
     <tr data-symbol="${symbol}">
-      <td class="mono strong">${symbol}</td><td>${name}</td><td class="mono">${price}</td>
-      <td class="mono ${isTrendUp(change) ? 'up' : 'down'}">${change}</td><td class="mono muted">${volume}</td>
-      <td>${sparkline(isTrendUp(change))}</td><td><button class="table-action" data-action="trade">Trade</button></td>
+      <td class="mono strong">${symbol}</td><td>${name}</td>
+      <td class="mono">${convertPriceString(price)}</td>
+      <td class="mono ${isTrendUp(change) ? 'up' : 'down'}">${change}</td>
+      <td class="mono muted">${volume}</td>
+      <td>${sparkline(isTrendUp(change))}</td>
+      <td><button class="table-action" data-action="trade">Trade</button></td>
     </tr>`).join("");
 }
 
@@ -123,7 +133,7 @@ export function renderMarketsPage() {
 // Formatting helpers for the stock detail page. Each returns 'N/A' when
 // the underlying Finnhub field is missing (common on free-tier API keys).
 function formatPrice(value) {
-  return typeof value === 'number' ? `$${value.toFixed(2)}` : 'N/A';
+  return formatWithCurrency(value);
 }
 
 function formatNumber(value) {
@@ -137,9 +147,11 @@ function formatPercent(value) {
 // Finnhub reports market cap and trading volume in millions.
 function formatMarketCap(valueInMillions) {
   if (typeof valueInMillions !== 'number') return 'N/A';
-  if (valueInMillions >= 1_000_000) return `$${(valueInMillions / 1_000_000).toFixed(2)}T`;
-  if (valueInMillions >= 1_000) return `$${(valueInMillions / 1_000).toFixed(2)}B`;
-  return `$${valueInMillions.toFixed(2)}M`;
+  const { symbol, rate } = getCurrency();
+  const converted = valueInMillions * rate;
+  if (converted >= 1_000_000) return `${symbol}${(converted / 1_000_000).toFixed(2)}T`;
+  if (converted >= 1_000) return `${symbol}${(converted / 1_000).toFixed(2)}B`;
+  return `${symbol}${converted.toFixed(2)}M`;
 }
 
 function formatShares(valueInMillions) {

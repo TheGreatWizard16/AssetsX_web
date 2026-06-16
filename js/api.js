@@ -233,7 +233,7 @@ function generateFallbackCandles(symbol, referencePrice) {
 // demo price history is generated instead so the chart still renders.
 export async function fetchStockCandles(symbol, resolution, from, to, referencePrice) {
   try {
-    const cacheKey = `assetsx_stock_candles_${symbol}_${resolution}`;
+    const cacheKey = `assetsx_stock_candles_${symbol}_${resolution}_${from}`;
     const cachedCandles = readCache(cacheKey);
     if (cachedCandles && cachedCandles.labels && cachedCandles.prices) {
       console.log(`AssetsX: Using cached candles for ${symbol}.`);

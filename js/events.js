@@ -8,6 +8,7 @@
  * Each `bind...` function below handles one group of related elements:
  *   - bindActionButtons: any element with a `data-action` attribute
  *   - bindRangeTabs: the small pill-shaped range/category tabs
+ *   - bindStockRangeTabs: the 1D/1M/3M/1Y tabs that reload the stock chart
  *   - bindRowNavigation: clicking a watchlist or market table row
  *   - bindNewsCardNavigation: clicking a news card
  *   - bindGlobalSearch: the topbar search input
@@ -16,6 +17,8 @@
 import { showToast } from './utils.js';
 import { auth } from './firebase.js';
 import { signOut } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+import { fetchStockCandles } from './api.js';
+import { initStockChart } from './charts.js';
 
 // Handles every button/element with a `data-action="..."` attribute.
 function bindActionButtons() {
@@ -72,14 +75,49 @@ function handleAction(button) {
 
 // Lets the user click between pills inside a `.range-tabs` group
 // (e.g. chart ranges, market filters, news categories), toggling which
-// pill has the `.active` style.
+// pill has the `.active` style. The stock page's range tabs are handled
+// separately by bindStockRangeTabs so they can also reload the chart.
 function bindRangeTabs() {
-  document.querySelectorAll(".range-tabs").forEach((group) => {
+  document.querySelectorAll(".range-tabs:not(#stockRangeTabs)").forEach((group) => {
     group.querySelectorAll(".pill").forEach((pill) => {
       pill.addEventListener("click", () => {
         group.querySelectorAll(".pill").forEach((item) => item.classList.remove("active"));
         pill.classList.add("active");
       });
+    });
+  });
+}
+
+// Wires the 1D / 1M / 3M / 1Y pills on the stock detail page so each
+// click fetches the appropriate candle data and redraws the chart.
+function bindStockRangeTabs() {
+  const container = document.getElementById('stockRangeTabs');
+  if (!container) return;
+
+  const symbol = new URLSearchParams(location.search).get('symbol') || 'AAPL';
+
+  container.querySelectorAll('.pill').forEach((pill) => {
+    pill.addEventListener('click', async () => {
+      container.querySelectorAll('.pill').forEach((p) => p.classList.remove('active'));
+      pill.classList.add('active');
+
+      const now = Math.floor(Date.now() / 1000);
+      const SECONDS = { D: 86400, W: 604800 };
+      let from, resolution;
+
+      switch (pill.dataset.range) {
+        case '1D':
+          from = now - 7  * SECONDS.D;  resolution = 'D'; break;
+        case '3M':
+          from = now - 90 * SECONDS.D;  resolution = 'D'; break;
+        case '1Y':
+          from = now - 365 * SECONDS.D; resolution = 'W'; break;
+        default: // 1M
+          from = now - 30 * SECONDS.D;  resolution = 'D';
+      }
+
+      const data = await fetchStockCandles(symbol, resolution, from, now);
+      initStockChart('stockChart', data);
     });
   });
 }
@@ -121,18 +159,25 @@ function bindNewsCardNavigation() {
   });
 }
 
-// Filters watchlist rows, holdings, news cards, and market table rows
-// as the user types in the topbar search box.
+// Filters visible rows/cards as the user types. Pressing Enter with a
+// 1–5 letter query navigates directly to that stock's detail page.
 function bindGlobalSearch() {
   const searchInput = document.querySelector(".search");
   if (!searchInput) return;
 
   searchInput.addEventListener("input", () => {
     const query = searchInput.value.trim().toLowerCase();
-
     document.querySelectorAll(".watch-row, .holding-row, .news-card, .market-table tbody tr").forEach((row) => {
       row.style.display = row.textContent.toLowerCase().includes(query) ? "" : "none";
     });
+  });
+
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    const query = searchInput.value.trim().toUpperCase();
+    if (query.length >= 1 && query.length <= 5 && /^[A-Z]+$/.test(query)) {
+      location.href = `stock.html?symbol=${query}`;
+    }
   });
 }
 
@@ -141,6 +186,7 @@ function bindGlobalSearch() {
 export function bindInteractions() {
   bindActionButtons();
   bindRangeTabs();
+  bindStockRangeTabs();
   bindRowNavigation();
   bindNewsCardNavigation();
   bindGlobalSearch();
