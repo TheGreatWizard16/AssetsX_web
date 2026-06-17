@@ -1,13 +1,4 @@
-/*
- * charts.js
- * ---------
- * Wraps Chart.js so the rest of the app can draw a price-history line
- * chart with a single function call, including handling the "no data"
- * placeholder state.
- */
-
-// Replaces a missing/empty chart with a placeholder message and hides
-// the (empty) canvas.
+// Show a "no data" message inside the chart container when the API returns nothing
 function showChartPlaceholder(canvas) {
   canvas.style.display = "none";
 
@@ -20,32 +11,21 @@ function showChartPlaceholder(canvas) {
   canvas.after(placeholder);
 }
 
-// Removes any previously-added "no data" placeholder so it doesn't
-// duplicate when a chart is re-rendered.
+// Remove the placeholder before drawing a fresh chart so they don't stack
 function removeChartPlaceholder(canvas) {
   const existingPlaceholder = canvas.parentElement.querySelector('.chart-placeholder');
-  if (existingPlaceholder) {
-    existingPlaceholder.remove();
-  }
+  if (existingPlaceholder) existingPlaceholder.remove();
   canvas.style.display = 'block';
 }
 
-/*
- * Draws (or redraws) a line chart of closing prices into the <canvas>
- * with the given id.
- *
- * `chartData` is expected to look like:
- *   { labels: ["1/1/2024", ...], prices: [123.4, ...] }
- *
- * If `chartData` is missing/empty, a placeholder message is shown
- * instead of an empty chart.
- */
+// Draw a price history line chart on a canvas element.
+// chartData should be { labels: [...dates], prices: [...numbers] }
 export function initStockChart(canvasId, chartData) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
   if (typeof Chart === 'undefined') {
-    console.error("AssetsX: Chart.js library not loaded. Check your HTML script tags.");
+    console.error("Chart.js is not loaded. Check the script tag in the HTML.");
     return;
   }
 
@@ -56,15 +36,14 @@ export function initStockChart(canvasId, chartData) {
     return;
   }
 
+  // Read the green color from our CSS variables so the chart matches the theme
   const lineColor = getComputedStyle(document.documentElement).getPropertyValue('--green').trim() || '#4ade80';
 
-  // Destroy any existing chart on this canvas before drawing a new one.
+  // Destroy the previous chart on this canvas before drawing a new one
   const existingChart = Chart.getChart(canvasId);
-  if (existingChart) {
-    existingChart.destroy();
-  }
+  if (existingChart) existingChart.destroy();
 
-  // Mini charts (sign in/up preview) don't show point markers.
+  // Mini charts on the sign-in page don't need point dots
   const isMiniChart = canvasId.includes('mini');
 
   new Chart(canvas, {
@@ -82,6 +61,7 @@ export function initStockChart(canvasId, chartData) {
     },
     options: {
       responsive: true,
+      // maintainAspectRatio false lets the chart fill the parent container's height
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: { x: { display: false }, y: { display: false } },

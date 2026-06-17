@@ -1,18 +1,5 @@
-/*
- * main.js
- * -------
- * Entry point loaded by every page (`<script type="module" src="js/main.js">`).
- *
- * Page initialization works like this:
- *   1. Read which page we're on from `document.body.dataset.page`
- *      (set via `data-page="..."` on the <body> tag).
- *   2. Bind the sign in / sign up form submit handlers immediately, so
- *      the forms work even before data has finished loading.
- *   3. Show placeholder metric cards immediately for a fast first paint.
- *   4. Load shared data (location, market quotes, news) in parallel.
- *   5. Once that data is ready, render the current page's content and
- *      attach all click/search interactions.
- */
+// App entry point — loaded by every page via <script type="module">.
+// Reads data-page from <body>, loads shared data, then renders the right page.
 
 import { initGeolocation, fetchMarketData, fetchGeneralNews } from './api.js';
 import { bindInteractions } from './events.js';

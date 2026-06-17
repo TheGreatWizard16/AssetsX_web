@@ -1,18 +1,5 @@
-/*
- * events.js
- * ---------
- * Wires up all click/input interactions for the page. This is called
- * once, after the page's dynamic content (rows, cards, etc.) has been
- * rendered, so the listeners attach to the final elements.
- *
- * Each `bind...` function below handles one group of related elements:
- *   - bindActionButtons: any element with a `data-action` attribute
- *   - bindRangeTabs: the small pill-shaped range/category tabs
- *   - bindStockRangeTabs: the 1D/1M/3M/1Y tabs that reload the stock chart
- *   - bindRowNavigation: clicking a watchlist or market table row
- *   - bindNewsCardNavigation: clicking a news card
- *   - bindGlobalSearch: the topbar search input
- */
+// All click/input event listeners for the app.
+// bindInteractions() is called after the page renders so listeners attach to real elements.
 
 import { showToast } from './utils.js';
 import { auth } from './firebase.js';

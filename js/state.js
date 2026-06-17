@@ -1,15 +1,6 @@
-/*
- * state.js
- * --------
- * Small shared "in-memory" store for data that is fetched once and then
- * used by several different functions/pages (market rows, news items,
- * the user's detected location).
- *
- * This replaces the old top-level `let marketRows = []` style globals in
- * app.js. Other modules import `appState` and read/write its properties,
- * so there is a single, clearly-named source of truth.
- */
-
+// Shared data store used across multiple pages.
+// Market rows, news items, and user location are fetched once and saved here
+// so any page can read them without making duplicate API calls.
 export const appState = {
   marketRows: [],
   newsItems: [],

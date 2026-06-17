@@ -1,20 +1,12 @@
-/*
- * utils.js
- * --------
- * Small, reusable helper functions that don't belong to any one page:
- * trend/sparkline helpers, time formatting, and the toast notification.
- */
-
-// Returns true if a "+1.25%" / "-0.44%" style change string represents an
-// upward trend. An empty/missing value is treated as "up" (green).
+// Check if a price change string like "+1.25%" or "-0.44%" is going up.
+// If no value is provided, we treat it as positive (green) by default.
 export function isTrendUp(changeText) {
   if (!changeText) return true;
   return !changeText.trim().startsWith("-");
 }
 
-// Returns a small inline SVG sparkline, colored green for an upward trend
-// and red for a downward trend. The point coordinates are fixed demo
-// shapes (one "up" line, one "down" line).
+// Return a small SVG sparkline graphic, green for up and red for down.
+// These are fixed shapes used as a quick visual indicator in the watchlist.
 export function sparkline(isUp = true) {
   const upPoints = "0,24 14,18 25,20 38,9 51,13 62,4 74,8";
   const downPoints = "0,7 15,11 26,6 39,15 52,12 74,21";
@@ -28,8 +20,8 @@ export function sparkline(isUp = true) {
   `;
 }
 
-// Converts a Unix timestamp (seconds) into a short relative time string,
-// e.g. "5m ago", "3h ago", "2d ago".
+// Convert a Unix timestamp (in seconds) to a human-readable "time ago" string.
+// Example: 300 seconds ago becomes "5m ago"
 export function formatTimeAgo(timestamp) {
   const secondsAgo = Math.floor(Date.now() / 1000 - timestamp);
 
@@ -45,23 +37,20 @@ export function formatTimeAgo(timestamp) {
   return `${daysAgo}d ago`;
 }
 
-// Shows a temporary toast message in the bottom-right corner. Any
-// previously visible toast is removed first so they don't stack up.
+// Show a temporary popup message at the bottom of the screen.
+// We remove any existing toast first to avoid them stacking.
 export function showToast(message) {
   const existingToast = document.querySelector(".toast");
-  if (existingToast) {
-    existingToast.remove();
-  }
+  if (existingToast) existingToast.remove();
 
   const toast = document.createElement("div");
   toast.className = "toast";
   toast.textContent = message;
   document.body.appendChild(toast);
 
-  // Fade in shortly after being added to the DOM.
+  // Small delay before adding the "visible" class so the CSS transition plays
   setTimeout(() => toast.classList.add("visible"), 10);
 
-  // Fade out and remove after a few seconds.
   setTimeout(() => {
     toast.classList.remove("visible");
     setTimeout(() => toast.remove(), 200);

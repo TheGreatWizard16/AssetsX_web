@@ -1,14 +1,5 @@
-/*
- * pages.js
- * --------
- * Functions that fill in the dynamic parts of each page (the bits marked
- * "Filled by app.js" in the HTML files).
- *
- * Each `render*Page()` function corresponds to one `data-page` value and
- * is called from main.js once the shared market/news data has been
- * loaded. Smaller `render...` helper functions handle one section of a
- * page each, so each function stays short and focused.
- */
+// Functions that fill in the dynamic content for each page.
+// Each renderXxxPage() maps to a data-page value on the <body> tag.
 
 import { appState } from './state.js';
 import { fetchStockDetails, fetchStockCandles } from './api.js';
@@ -16,10 +7,6 @@ import { initStockChart } from './charts.js';
 import { sparkline, isTrendUp, formatTimeAgo } from './utils.js';
 import { DEMO_HOLDINGS, DEMO_PORTFOLIO_SUMMARY, DEMO_ALLOCATION } from './config.js';
 import { formatWithCurrency, getCurrency } from './currency.js';
-
-/* ----------------------------------------------------------------------
- * Shared UI pieces (used by more than one page)
- * ------------------------------------------------------------------- */
 
 // Fills the metrics grid (Home + Portfolio) with summary cards.
 // `metrics` is an array of [label, value, detail, isPositive] tuples.
@@ -60,9 +47,7 @@ export function renderNewsCard(tag, title, copy, img, isLarge = false, timestamp
   `;
 }
 
-/* ----------------------------------------------------------------------
- * Home page
- * ------------------------------------------------------------------- */
+// ── Home page ────────────────────────────────────────────────────────────────
 
 function renderWatchlist() {
   const container = document.getElementById('watchlist-container');
@@ -100,9 +85,7 @@ export function renderHomePage(now, monthAgo) {
   fetchStockCandles('AAPL', 'D', monthAgo, now, aaplPrice).then(data => initStockChart('homeChart', data));
 }
 
-/* ----------------------------------------------------------------------
- * Markets page
- * ------------------------------------------------------------------- */
+// ── Markets page ─────────────────────────────────────────────────────────────
 
 // Converts a "$173.50" USD price string to the selected currency.
 function convertPriceString(priceStr) {
@@ -126,9 +109,7 @@ export function renderMarketsPage() {
     </tr>`).join("");
 }
 
-/* ----------------------------------------------------------------------
- * Stock detail page
- * ------------------------------------------------------------------- */
+// ── Stock detail page ─────────────────────────────────────────────────────────
 
 // Formatting helpers for the stock detail page. Each returns 'N/A' when
 // the underlying Finnhub field is missing (common on free-tier API keys).
@@ -284,9 +265,7 @@ export function renderStockPage(now, monthAgo) {
   });
 }
 
-/* ----------------------------------------------------------------------
- * Portfolio page
- * ------------------------------------------------------------------- */
+// ── Portfolio page ────────────────────────────────────────────────────────────
 
 // Fills the top-line summary card (total value, today's change, total gain).
 function renderPortfolioSummary() {
@@ -346,9 +325,7 @@ export function renderPortfolioPage() {
     </div>`).join("");
 }
 
-/* ----------------------------------------------------------------------
- * News page
- * ------------------------------------------------------------------- */
+// ── News page ─────────────────────────────────────────────────────────────────
 
 // Looks up a single article by its `id` query parameter. IDs starting
 // with "stock-" refer to a company-specific article cached alongside
@@ -406,9 +383,7 @@ export function renderNewsPage() {
   }
 }
 
-/* ----------------------------------------------------------------------
- * Sign in / Sign up pages
- * ------------------------------------------------------------------- */
+// ── Auth pages ────────────────────────────────────────────────────────────────
 
 // Draws the small demo chart shown next to the auth forms.
 export function renderAuthPage() {
