@@ -4,8 +4,9 @@ export const API_CONFIG = {
   CACHE_DURATION: 1000 * 60 * 5, // 5 minutes in milliseconds
 };
 
-// Stocks shown in the watchlist and market table
-export const WATCHLIST_SYMBOLS = ["AAPL", "MSFT", "TSLA", "NVDA", "AMZN"];
+// Stocks shown in the watchlist and market table — mix of countries so
+// the country search requirement is satisfied (Req 2).
+export const WATCHLIST_SYMBOLS = ["AAPL", "MSFT", "TSLA", "NVDA", "AMZN", "SAP", "TM", "SHEL", "BABA"];
 
 export const SYMBOL_NAMES = {
   AAPL: "Apple Inc.",
@@ -13,15 +14,37 @@ export const SYMBOL_NAMES = {
   TSLA: "Tesla Inc.",
   NVDA: "NVIDIA Corp.",
   AMZN: "Amazon.com",
+  SAP:  "SAP SE",
+  TM:   "Toyota Motor",
+  SHEL: "Shell plc",
+  BABA: "Alibaba Group",
 };
 
-// Fallback data shown if the API is unavailable or the request fails
+// Country of origin for each tracked symbol (used in the market table and search)
+export const SYMBOL_COUNTRIES = {
+  AAPL: "United States",
+  MSFT: "United States",
+  TSLA: "United States",
+  NVDA: "United States",
+  AMZN: "United States",
+  SAP:  "Germany",
+  TM:   "Japan",
+  SHEL: "United Kingdom",
+  BABA: "China",
+};
+
+// Fallback data shown if the API is unavailable or the request fails.
+// Each row: [symbol, name, price, change%, volume, country]
 export const FALLBACK_MARKET_ROWS = [
-  ["AAPL", "Apple Inc.", "$173.50", "+1.25%", "58.2M"],
-  ["MSFT", "Microsoft Corp.", "$420.21", "+0.85%", "31.8M"],
-  ["TSLA", "Tesla Inc.", "$175.22", "+4.50%", "92.1M"],
-  ["NVDA", "NVIDIA Corp.", "$1,037.99", "+2.18%", "45.7M"],
-  ["AMZN", "Amazon.com", "$182.12", "-0.44%", "27.3M"],
+  ["AAPL", "Apple Inc.",      "$173.50",   "+1.25%", "58.2M", "United States"],
+  ["MSFT", "Microsoft Corp.", "$420.21",   "+0.85%", "31.8M", "United States"],
+  ["TSLA", "Tesla Inc.",      "$175.22",   "+4.50%", "92.1M", "United States"],
+  ["NVDA", "NVIDIA Corp.",    "$1,037.99", "+2.18%", "45.7M", "United States"],
+  ["AMZN", "Amazon.com",      "$182.12",   "-0.44%", "27.3M", "United States"],
+  ["SAP",  "SAP SE",          "$225.40",   "+0.65%",  "1.2M", "Germany"],
+  ["TM",   "Toyota Motor",    "$185.20",   "-0.32%",  "0.8M", "Japan"],
+  ["SHEL", "Shell plc",       "$68.90",    "+0.42%",  "3.5M", "United Kingdom"],
+  ["BABA", "Alibaba Group",   "$115.30",   "+1.85%",  "8.7M", "China"],
 ];
 
 export const FALLBACK_QUOTE = { c: 150.0, d: 1.25, dp: 0.85 };

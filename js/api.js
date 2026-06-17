@@ -1,4 +1,4 @@
-import { API_CONFIG, WATCHLIST_SYMBOLS, SYMBOL_NAMES, FALLBACK_MARKET_ROWS, FALLBACK_QUOTE } from './config.js';
+import { API_CONFIG, WATCHLIST_SYMBOLS, SYMBOL_NAMES, SYMBOL_COUNTRIES, FALLBACK_MARKET_ROWS, FALLBACK_QUOTE } from './config.js';
 import { readCache, writeCache } from './cache.js';
 import { appState } from './state.js';
 import { showToast } from './utils.js';
@@ -33,6 +33,7 @@ function buildMarketRow(quote) {
     `$${price.toFixed(2)}`,
     `${change >= 0 ? '+' : ''}${changePercent.toFixed(2)}%`,
     "N/A",
+    SYMBOL_COUNTRIES[quote.symbol] || "Global",
   ];
 }
 

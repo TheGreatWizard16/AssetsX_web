@@ -1,18 +1,21 @@
 # AssetsX
 
-AssetsX is a responsive stock market web app prototype built with plain HTML, CSS, and JavaScript.
+AssetsX is a responsive stock market web app built as a final exam project for the University of Europe for Applied Sciences Frontend Programming module (SoSe 2026).
 
-The design follows the same visual language as the mobile Figma app: dark finance UI, blue-gray accents, green/red price movement, compact cards, charts, sidebar navigation, and professional dashboard spacing.
+The design follows a dark finance UI with blue-gray accents, green/red price sentiment, compact cards, Chart.js line charts, a sidebar navigation for desktop, and a bottom tab bar for mobile.
 
 ## Technologies
 
-- HTML
-- CSS
-- JavaScript
+- HTML5
+- CSS3 (responsive, mobile-first)
+- Vanilla JavaScript (ES modules)
+- Bootstrap 5.3 (CDN) — required by the project specification
+- Chart.js (CDN) — required by the project specification
+- Firebase Authentication (email / password sign-in)
+- Finnhub Stock API (real-time quotes, candles, news, company profiles)
+- ipapi.co (IP-based geolocation for the header location pill)
 
-No React, Vue, Bootstrap, Tailwind, or backend framework is used.
-
-## How To Run
+## How To Run (local development)
 
 Open the project folder in VS Code:
 
@@ -34,15 +37,15 @@ http://127.0.0.1:5173
 
 ## Pages
 
-- `index.html` redirects into the same Sign In experience.
-- `signin.html` shows the Sign In page.
-- `signup.html` shows the Sign Up page.
-- `home.html` shows the dashboard.
-- `markets.html` shows the live market table.
-- `stock.html` shows the Apple stock detail page.
-- `portfolio.html` shows portfolio balance, allocation, and holdings.
-- `news.html` shows market news cards.
-- `pro.html` shows the Pro subscription page.
+- `index.html` — redirects to the sign-in page
+- `signin.html` — email/password sign-in (Firebase Auth)
+- `signup.html` — new account registration (Firebase Auth)
+- `home.html` — main dashboard: greeting, metrics, portfolio chart, watchlist, news
+- `markets.html` — live market table with search and currency switching
+- `stock.html` — detailed stock page: hero card, 52-week range bar, price chart (1D/1M/3M/1Y tabs), key stats, company profile, related news
+- `portfolio.html` — portfolio balance, asset allocation chart, holdings list
+- `news.html` — general market news feed
+- `pro.html` — Pro subscription / upgrade page
 
 ## File Structure
 
@@ -59,54 +62,39 @@ AssetsX/
   pro.html
   styles.css
   js/
-    config.js   - API keys, cache duration, demo/fallback data
-    state.js    - shared in-memory data (market rows, news, location)
-    cache.js    - sessionStorage caching helpers
-    api.js      - all Finnhub + geolocation network requests
-    utils.js    - formatters, toast notifications, sparkline SVG
-    charts.js   - Chart.js setup and "no data" placeholder
-    pages.js    - fills in the dynamic content for each page
-    events.js   - click/search interactions
-    main.js     - entry point, page routing
+    config.js      - API keys, cache settings, demo/fallback data
+    state.js       - shared in-memory data (market rows, news, location)
+    cache.js       - sessionStorage helpers with 5-minute TTL
+    api.js         - Finnhub + geolocation fetch calls
+    currency.js    - USD / EUR / GBP / JPY conversion with localStorage
+    utils.js       - price formatters, toast, sparkline SVG
+    charts.js      - Chart.js setup and "no data" placeholder
+    pages.js       - renders the dynamic content for each page
+    events.js      - search, row navigation, range tab interactions
+    main.js        - entry point, page routing
+    firebase.js    - Firebase app + auth initialisation
   package.json
   README.md
 ```
 
 ## How The JavaScript Works
 
-Each HTML file has a `data-page` value on the `<body>` tag.
-
-Example:
+Each HTML file has a `data-page` attribute on its `<body>` tag:
 
 ```html
 <body data-page="markets">
 ```
 
-`js/main.js` reads that value:
+`js/main.js` reads that value and calls the matching render function from `js/pages.js` (e.g. `renderMarketsPage()`), which fills the placeholder containers already in the HTML.
 
-```js
-document.body.dataset.page
-```
+Modules are kept small and focused — `config.js` for constants, `api.js` for network calls, `cache.js` for caching, `pages.js` for rendering, and `events.js` for interactions — so each file has one clear responsibility.
 
-and calls the matching render function from `js/pages.js` (e.g.
-`renderMarketsPage()`), which fills in the placeholder containers already
-present in the HTML (e.g. `<tbody id="market-table-body">`).
+## Key Features
 
-Splitting the old single `app.js` file into the small modules above keeps
-each file focused on one responsibility (config, data fetching, caching,
-rendering, or interactions), which makes the codebase easier to navigate
-and extend without changing any existing behavior.
-
-## Button Behavior
-
-- Sign In and Sign Up forms navigate to `home.html`.
-- Sidebar links navigate to real HTML files.
-- Export downloads example market data as a CSV file.
-- Trade buttons open `stock.html`.
-- Buy, Sell, Forgot Password, Social Login, and Pro buttons show demo feedback messages.
-- Market search filters the stock table.
-- Filter pills and chart range pills switch their active state when clicked.
-
-## Project Notes
-
-The stock and portfolio data is currently static example data. It is written in a way that can later be replaced by a real stock API such as Marketstack.
+- **Color-coded sentiment** — green for gains, red for losses, applied to badges, metric cards, the stock hero, and the 52-week range bar
+- **Search** — filters visible rows/cards live as you type; pressing Enter with a 1–5 letter symbol navigates directly to that stock's detail page
+- **Price history tabs** — 1D / 1M / 3M / 1Y tabs on `stock.html` re-fetch candle data from Finnhub and redraw the chart
+- **Currency switching** — USD / EUR / GBP / JPY selector in the top bar; preference stored in `localStorage`
+- **Geolocation** — city and country shown in the header subtitle via ipapi.co
+- **Authentication** — Firebase email/password sign-in; auth guard redirects unauthenticated users
+- **Responsive layout** — sidebar + content grid on desktop, bottom tab bar on mobile (≤680 px)

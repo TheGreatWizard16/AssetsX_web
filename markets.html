@@ -48,11 +48,12 @@
 
           <!-- Filtering and Search functionality -->
           <div class="filter-bar">
-            <input class="market-search" type="search" placeholder="Search symbol or company..." />
-            <div class="range-tabs">
-              <span class="pill active">All Markets</span>
-              <span class="pill">US Equities</span>
-              <span class="pill">Crypto</span>
+            <input class="market-search" type="search" placeholder="Search symbol, company, or country..." />
+            <div class="range-tabs" id="market-region-tabs">
+              <span class="pill active" data-region="all">All Markets</span>
+              <span class="pill" data-region="americas">Americas</span>
+              <span class="pill" data-region="europe">Europe</span>
+              <span class="pill" data-region="asia">Asia-Pacific</span>
             </div>
           </div>
 
@@ -63,6 +64,7 @@
                 <tr>
                   <th>Symbol</th>
                   <th>Company</th>
+                  <th>Country</th>
                   <th>Price</th>
                   <th>Change</th>
                   <th>Volume</th>

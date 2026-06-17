@@ -53,7 +53,7 @@ function renderWatchlist() {
   const container = document.getElementById('watchlist-container');
   if (!container) return;
 
-  container.innerHTML = appState.marketRows.map(([symbol, name, price, change]) => {
+  container.innerHTML = appState.marketRows.map(([symbol, name, price, change, , country]) => {
     const up = isTrendUp(change);
     return `
     <div class="watch-row" data-symbol="${symbol}">
@@ -64,6 +64,7 @@ function renderWatchlist() {
         ${convertPriceString(price)}
         <small><span class="change-badge ${up ? 'badge-up' : 'badge-down'}">${change}</span></small>
       </span>
+      <span style="display:none">${country || ''}</span>
     </div>`;
   }).join("");
 }
@@ -106,12 +107,13 @@ export function renderMarketsPage() {
   const tbody = document.getElementById('market-table-body');
   if (!tbody) return;
 
-  tbody.innerHTML = appState.marketRows.map(([symbol, name, price, change, volume]) => {
+  tbody.innerHTML = appState.marketRows.map(([symbol, name, price, change, volume, country]) => {
     const up = isTrendUp(change);
     return `
     <tr data-symbol="${symbol}">
       <td class="mono strong">${symbol}</td>
       <td>${name}</td>
+      <td class="muted">${country || ''}</td>
       <td class="mono">${convertPriceString(price)}</td>
       <td><span class="change-badge ${up ? 'badge-up' : 'badge-down'}">${change}</span></td>
       <td class="mono muted">${volume}</td>

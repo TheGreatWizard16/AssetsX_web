@@ -148,23 +148,53 @@ function bindNewsCardNavigation() {
 
 // Filters visible rows/cards as the user types. Pressing Enter with a
 // 1–5 letter query navigates directly to that stock's detail page.
+// Both the topbar .search and the inline .market-search are wired here.
 function bindGlobalSearch() {
-  const searchInput = document.querySelector(".search");
-  if (!searchInput) return;
+  [".search", ".market-search"].forEach(selector => {
+    const searchInput = document.querySelector(selector);
+    if (!searchInput) return;
 
-  searchInput.addEventListener("input", () => {
-    const query = searchInput.value.trim().toLowerCase();
-    document.querySelectorAll(".watch-row, .holding-row, .news-card, .market-table tbody tr").forEach((row) => {
-      row.style.display = row.textContent.toLowerCase().includes(query) ? "" : "none";
+    searchInput.addEventListener("input", () => {
+      const query = searchInput.value.trim().toLowerCase();
+      document.querySelectorAll(".watch-row, .holding-row, .news-card, .market-table tbody tr").forEach((row) => {
+        row.style.display = row.textContent.toLowerCase().includes(query) ? "" : "none";
+      });
+    });
+
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const query = searchInput.value.trim().toUpperCase();
+      if (query.length >= 1 && query.length <= 5 && /^[A-Z]+$/.test(query)) {
+        location.href = `stock.html?symbol=${query}`;
+      }
     });
   });
+}
 
-  searchInput.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-    const query = searchInput.value.trim().toUpperCase();
-    if (query.length >= 1 && query.length <= 5 && /^[A-Z]+$/.test(query)) {
-      location.href = `stock.html?symbol=${query}`;
-    }
+// Wires the region filter pills on the Markets page (Americas / Europe / Asia-Pacific).
+// Clicking a pill hides rows whose country column doesn't match.
+function bindMarketRegionFilter() {
+  const tabs = document.getElementById('market-region-tabs');
+  if (!tabs) return;
+
+  const REGIONS = {
+    americas: ['united states', 'canada', 'brazil', 'mexico'],
+    europe:   ['germany', 'united kingdom', 'france', 'netherlands', 'sweden'],
+    asia:     ['japan', 'china', 'south korea', 'india', 'hong kong'],
+  };
+
+  tabs.querySelectorAll('.pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const region = pill.dataset.region || 'all';
+      document.querySelectorAll('.market-table tbody tr').forEach(row => {
+        if (region === 'all') {
+          row.style.display = '';
+          return;
+        }
+        const country = (row.cells[2]?.textContent || '').toLowerCase();
+        row.style.display = REGIONS[region].some(c => country.includes(c)) ? '' : 'none';
+      });
+    });
   });
 }
 
@@ -177,4 +207,5 @@ export function bindInteractions() {
   bindRowNavigation();
   bindNewsCardNavigation();
   bindGlobalSearch();
+  bindMarketRegionFilter();
 }
