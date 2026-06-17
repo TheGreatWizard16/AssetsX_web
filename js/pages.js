@@ -159,18 +159,18 @@ function renderStockHero(symbol, details) {
     ? `<img class="stock-logo" src="${profile.logo}" alt="${symbol} logo" loading="lazy" onerror="this.outerHTML='<div class=&quot;stock-logo stock-logo-fallback&quot;>${symbol[0]}</div>'">`
     : `<div class="stock-logo stock-logo-fallback">${symbol[0]}</div>`;
 
-  // Price block and Sell/Buy buttons are grouped on the right so the hero
-  // always renders as two columns: identity left, price+actions right.
+  // Symbol and name come first so the logo centers against prominent text,
+  // tags sit below as secondary info. Price+actions are grouped on the right.
   hero.innerHTML = `
     <div class="stock-identity">
       ${logo}
       <div>
+        <h2>${symbol}</h2>
+        <p>${profile.name || ''}</p>
         <div class="stock-tags">
           <span class="pill active">${exchange}</span>
           ${profile.finnhubIndustry ? `<span class="pill">${profile.finnhubIndustry}</span>` : ''}
         </div>
-        <h2>${symbol}</h2>
-        <p>${profile.name || ''}</p>
       </div>
     </div>
     <div class="stock-price-block">

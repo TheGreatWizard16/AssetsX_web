@@ -662,8 +662,20 @@ a {
 
 .stock-identity {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 18px;
+}
+
+.stock-identity h2 {
+  margin: 0 0 4px;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.stock-identity p {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .stock-logo {
@@ -692,15 +704,7 @@ a {
   margin-bottom: 10px;
 }
 
-.stock-hero h2 {
-  margin: 0;
-  font-size: 32px;
-}
-
-.stock-hero p {
-  margin: 4px 0 0;
-  color: var(--muted);
-}
+/* h2 and p inside .stock-identity are controlled by .stock-identity h2/p rules */
 
 .stock-price-block {
   display: flex;
