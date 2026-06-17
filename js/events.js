@@ -1,4 +1,4 @@
-// All click/input event listeners for the app.
+// All click and input event listeners for the app.
 // bindInteractions() is called after the page renders so listeners attach to real elements.
 
 import { showToast } from './utils.js';
@@ -7,14 +7,14 @@ import { signOut } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth
 import { fetchStockCandles } from './api.js';
 import { initStockChart } from './charts.js';
 
-// Handles every button/element with a `data-action="..."` attribute.
+// Handle every button that has a data-action attribute
 function bindActionButtons() {
   document.querySelectorAll("[data-action]").forEach((button) => {
     button.addEventListener("click", () => handleAction(button));
   });
 }
 
-// Performs the behaviour for a single data-action button click.
+// Decide what happens when a data-action button is clicked
 function handleAction(button) {
   const action = button.dataset.action;
 
@@ -60,10 +60,8 @@ function handleAction(button) {
   }
 }
 
-// Lets the user click between pills inside a `.range-tabs` group
-// (e.g. chart ranges, market filters, news categories), toggling which
-// pill has the `.active` style. The stock page's range tabs are handled
-// separately by bindStockRangeTabs so they can also reload the chart.
+// Make pill tabs inside any .range-tabs group switch the active state when clicked.
+// The stock chart tabs are handled separately because they also reload chart data.
 function bindRangeTabs() {
   document.querySelectorAll(".range-tabs:not(#stockRangeTabs)").forEach((group) => {
     group.querySelectorAll(".pill").forEach((pill) => {
@@ -75,8 +73,8 @@ function bindRangeTabs() {
   });
 }
 
-// Wires the 1D / 1M / 3M / 1Y pills on the stock detail page so each
-// click fetches the appropriate candle data and redraws the chart.
+// Wire the 1D / 1M / 3M / 1Y range tabs on the stock detail page.
+// Each click calculates the correct date range and redraws the chart.
 function bindStockRangeTabs() {
   const container = document.getElementById('stockRangeTabs');
   if (!container) return;
@@ -109,8 +107,7 @@ function bindStockRangeTabs() {
   });
 }
 
-// Makes watchlist rows and market table rows clickable, navigating to
-// that symbol's stock detail page.
+// Make watchlist rows and market table rows clickable, navigating to the stock detail page
 function bindRowNavigation() {
   document.querySelectorAll(".watch-row, .market-table tbody tr").forEach((row) => {
     const symbol = row.dataset.symbol;
@@ -123,9 +120,9 @@ function bindRowNavigation() {
   });
 }
 
-// Makes news cards clickable, navigating to the news reader view.
-// Cards with a "stock-N" index also carry the current stock symbol so
-// the reader can find that article in the stock's cached news list.
+// Make news cards navigate to the news reader page.
+// Cards from the stock detail page also pass the stock symbol in the URL
+// so the reader can find the right article in the cache.
 function bindNewsCardNavigation() {
   document.querySelectorAll(".news-card").forEach((card) => {
     const index = card.dataset.newsIndex;
@@ -146,9 +143,8 @@ function bindNewsCardNavigation() {
   });
 }
 
-// Filters visible rows/cards as the user types. Pressing Enter with a
-// 1–5 letter query navigates directly to that stock's detail page.
-// Both the topbar .search and the inline .market-search are wired here.
+// Filter visible rows and cards as the user types into the search box.
+// Pressing Enter with a stock symbol (1-5 letters) navigates directly to that stock.
 function bindGlobalSearch() {
   [".search", ".market-search"].forEach(selector => {
     const searchInput = document.querySelector(selector);
@@ -171,8 +167,8 @@ function bindGlobalSearch() {
   });
 }
 
-// Wires the region filter pills on the Markets page (Americas / Europe / Asia-Pacific).
-// Clicking a pill hides rows whose country column doesn't match.
+// Wire the region filter pills on the Markets page so they filter the table by country.
+// Country name is read from the third column (index 2) of each table row.
 function bindMarketRegionFilter() {
   const tabs = document.getElementById('market-region-tabs');
   if (!tabs) return;
@@ -198,8 +194,7 @@ function bindMarketRegionFilter() {
   });
 }
 
-// Attaches all global event listeners. Called after the page's dynamic
-// rows/cards have been rendered.
+// Attach all event listeners. Called after the page's dynamic content has been rendered.
 export function bindInteractions() {
   bindActionButtons();
   bindRangeTabs();

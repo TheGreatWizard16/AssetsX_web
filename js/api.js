@@ -4,10 +4,10 @@ import { appState } from './state.js';
 import { showToast } from './utils.js';
 
 
-// ── Market data (Home + Markets pages) ──────────────────────────────────────
+// ── Market data ──────────────────────────────────────────────────────────────
 
-// Fetch a single stock quote from the Finnhub API.
-// If the request fails, return fallback demo numbers so the page still renders.
+// Get a single stock quote from Finnhub.
+// Falls back to demo numbers if the request fails so the page still renders.
 function fetchQuote(symbol) {
   const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_CONFIG.FINNHUB_KEY}`;
 
@@ -20,8 +20,8 @@ function fetchQuote(symbol) {
     .catch(() => ({ symbol, ...FALLBACK_QUOTE }));
 }
 
-// Turn a raw Finnhub quote into the row format the market table expects:
-// [symbol, company name, price, change%, volume]
+// Convert a raw Finnhub quote object into a display row for the market table.
+// Row format: [symbol, name, price, change%, volume, country]
 function buildMarketRow(quote) {
   const price = typeof quote.c === 'number' ? quote.c : FALLBACK_QUOTE.c;
   const change = typeof quote.d === 'number' ? quote.d : 0;
@@ -37,8 +37,8 @@ function buildMarketRow(quote) {
   ];
 }
 
-// Fetch live quotes for all watchlist symbols and store them in appState.
-// Uses sessionStorage cache to avoid hitting the API on every page load.
+// Load live prices for all watchlist stocks and save them to appState.
+// Results are cached for 5 minutes to avoid hitting the API on every page load.
 export async function fetchMarketData() {
   try {
     const cachedRows = readCache('assetsx_market_data');
@@ -58,10 +58,10 @@ export async function fetchMarketData() {
 }
 
 
-// ── General news (Home + News pages) ────────────────────────────────────────
+// ── General news ─────────────────────────────────────────────────────────────
 
-// Format a raw Finnhub news article into the array the news card expects:
-// [tag, title, summary, image, timestamp, url]
+// Convert a raw Finnhub news article into the format news cards expect:
+// [category, headline, summary, image, timestamp, url]
 function buildGeneralNewsRow(article) {
   return [
     article.category.toUpperCase(),
@@ -74,7 +74,7 @@ function buildGeneralNewsRow(article) {
 }
 
 // Fetch the latest market news and save it to appState.
-// We only grab the first 12 articles to keep the page manageable.
+// We only keep 12 articles so the news page doesn't get too long.
 export async function fetchGeneralNews() {
   try {
     const cachedNews = readCache('assetsx_market_news');
@@ -97,11 +97,11 @@ export async function fetchGeneralNews() {
 }
 
 
-// ── Stock detail page ────────────────────────────────────────────────────────
+// ── Stock detail page ─────────────────────────────────────────────────────────
 
-// Format a company-specific news article for the stock detail page.
-// Finnhub's own article URLs sometimes redirect to their homepage on the free
-// plan, so we fall back to a Google search link for the headline instead.
+// Convert a company-specific news article into the format news cards expect.
+// Finnhub article URLs sometimes redirect to their homepage on the free plan,
+// so we fall back to a Google search link for the headline.
 function buildStockNewsRow(article) {
   const articleUrl = article.url && !article.url.includes('finnhub.io')
     ? article.url
@@ -117,7 +117,7 @@ function buildStockNewsRow(article) {
   ];
 }
 
-// Fetch everything needed for the stock detail page:
+// Fetch everything needed for the stock detail page in one go:
 // company profile, current quote, key metrics, and recent news.
 export async function fetchStockDetails(symbol) {
   try {
@@ -137,7 +137,7 @@ export async function fetchStockDetails(symbol) {
       fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${monthAgo}&to=${today}&token=${API_CONFIG.FINNHUB_KEY}`).then(r => r.json()),
     ]);
 
-    // If the API returned incomplete data, bail out and show an error
+    // If the API returned incomplete data (e.g. rate limit hit), stop here
     if (!profile || !profile.name || !quote || !quote.c) {
       showToast(`Could not load details for ${symbol}. API limit?`);
       return null;
@@ -159,12 +159,12 @@ export async function fetchStockDetails(symbol) {
 }
 
 
-// ── Price history for charts ─────────────────────────────────────────────────
+// ── Price history charts ──────────────────────────────────────────────────────
 
 const CHART_DEMO_DAYS = 30;
 
-// Generate a stable "seed" price for a symbol so demo charts look consistent.
-// We derive it from the character codes of the symbol letters.
+// Generate a consistent starting price from a stock symbol's letters.
+// This keeps demo charts stable across page refreshes rather than random.
 function seedPriceFromSymbol(symbol) {
   let total = 0;
   for (const char of symbol) total += char.charCodeAt(0);
@@ -172,7 +172,7 @@ function seedPriceFromSymbol(symbol) {
 }
 
 // Build a fake price history ending at referencePrice.
-// Used when Finnhub's candle endpoint is unavailable on the free plan.
+// Used when the Finnhub candle endpoint is unavailable on the free plan.
 function generateFallbackCandles(symbol, referencePrice) {
   const endPrice = referencePrice || seedPriceFromSymbol(symbol);
   const labels = new Array(CHART_DEMO_DAYS + 1);
@@ -186,20 +186,18 @@ function generateFallbackCandles(symbol, referencePrice) {
     labels[index] = date.toLocaleDateString();
     prices[index] = Number(price.toFixed(2));
 
-    // Step backwards with a small random movement to simulate price history
+    // Walk backwards with small random movements to simulate a real price history
     price -= (Math.random() - 0.5) * (endPrice * 0.02);
   }
 
   return { labels, prices };
 }
 
-// Fetch daily or weekly price candles (OHLC data) for a stock chart.
-// Falls back to generated demo data if the API doesn't have candles for the
-// requested range (common on free-tier Finnhub accounts).
+// Fetch OHLC candle data for the stock price chart.
+// The cache key includes the `from` timestamp so different date ranges
+// (1D, 1M, 3M, 1Y) don't overwrite each other in the cache.
 export async function fetchStockCandles(symbol, resolution, from, to, referencePrice) {
   try {
-    // Include the from timestamp in the cache key so different date ranges
-    // don't overwrite each other
     const cacheKey = `assetsx_stock_candles_${symbol}_${resolution}_${from}`;
     const cachedCandles = readCache(cacheKey);
     if (cachedCandles && cachedCandles.labels && cachedCandles.prices) {
@@ -225,7 +223,7 @@ export async function fetchStockCandles(symbol, resolution, from, to, referenceP
       return chartData;
     }
 
-    // No real data available, use generated demo data instead
+    // No candle data available, so use generated demo data
     const fallbackChart = generateFallbackCandles(symbol, referencePrice);
     writeCache(cacheKey, fallbackChart);
     return fallbackChart;
@@ -236,9 +234,9 @@ export async function fetchStockCandles(symbol, resolution, from, to, referenceP
 }
 
 
-// ── User location ────────────────────────────────────────────────────────────
+// ── User location ─────────────────────────────────────────────────────────────
 
-// Update the "City, Country - Market open - Date" text in the topbar
+// Update the location and date text shown in the page header
 function updateHeaderSubtitle() {
   const subtitle = document.getElementById('header-subtitle');
   if (subtitle) {
@@ -246,8 +244,8 @@ function updateHeaderSubtitle() {
   }
 }
 
-// Detect the user's city using their IP address and update the header.
-// We cache the result for the browser session so we only call the API once.
+// Detect the user's city from their IP address and update the header.
+// Result is cached in sessionStorage so we only call the API once per session.
 export async function initGeolocation() {
   try {
     const cachedLocation = sessionStorage.getItem('assetsx_user_location');
@@ -268,7 +266,6 @@ export async function initGeolocation() {
     updateHeaderSubtitle();
   } catch (error) {
     console.error("Geolocation failed:", error);
-    // Still update the subtitle with the default location
     updateHeaderSubtitle();
   }
 }

@@ -1,5 +1,5 @@
-// App entry point — loaded by every page via <script type="module">.
-// Reads data-page from <body>, loads shared data, then renders the right page.
+// App entry point — loaded on every page via <script type="module">.
+// Reads data-page from <body> to know which page to render.
 
 import { initGeolocation, fetchMarketData, fetchGeneralNews } from './api.js';
 import { bindInteractions } from './events.js';
@@ -23,8 +23,8 @@ const page = document.body.dataset.page;
 
 const SECONDS_PER_DAY = 24 * 60 * 60;
 
-// On the sign in / sign up pages, submitting the form authenticates with
-// Firebase and then redirects to the dashboard.
+// Handle form submission on the sign-in and sign-up pages.
+// On success, Firebase redirects the user to the dashboard.
 function bindAuthFormSubmit() {
   if (page !== 'signin' && page !== 'signup') return;
 
@@ -55,7 +55,7 @@ function bindAuthFormSubmit() {
   });
 }
 
-// Converts a Firebase Auth error code into a short, user-friendly message.
+// Map Firebase error codes to short messages the user can actually understand
 function authErrorMessage(error) {
   switch (error.code) {
     case 'auth/invalid-email':
@@ -73,9 +73,7 @@ function authErrorMessage(error) {
   }
 }
 
-// Renders the dynamic content for whichever page is currently loaded.
-// `now` and `monthAgo` are Unix timestamps (seconds) used for the
-// "last 30 days" price charts.
+// Call the right render function based on which page is currently open
 function renderCurrentPage(now, monthAgo) {
   switch (page) {
     case 'home':
@@ -100,7 +98,7 @@ function renderCurrentPage(now, monthAgo) {
   }
 }
 
-// Sets a time-aware greeting on the home page using the signed-in user's name.
+// Show a time-appropriate greeting using the logged-in user's name
 function updateGreeting() {
   const el = document.getElementById('greeting-text');
   if (!el) return;
@@ -112,8 +110,8 @@ function updateGreeting() {
   el.textContent = `Good ${time}${name ? `, ${name}` : ''}`;
 }
 
-// Injects a currency selector into .top-actions on every app page.
-// Changing the selection saves the choice and reloads so all prices update.
+// Add a currency selector dropdown to the top bar on every app page.
+// Changing the currency saves the choice and reloads so all prices update.
 function injectCurrencySelector() {
   const actions = document.querySelector('.top-actions');
   if (!actions) return;
@@ -133,13 +131,13 @@ function injectCurrencySelector() {
   actions.prepend(select);
 }
 
-// Race a promise against a timeout so a slow mobile network can't block
-// rendering indefinitely. Resolves (never rejects) after `ms` milliseconds.
+// Race a promise against a timeout so a slow mobile network never blocks rendering.
+// The timeout resolves (not rejects) so Promise.all always completes.
 function withTimeout(promise, ms) {
   return Promise.race([promise, new Promise(resolve => setTimeout(resolve, ms))]);
 }
 
-// Main app startup.
+// Start the app
 function initApp() {
   bindAuthFormSubmit();
   injectCurrencySelector();
@@ -148,15 +146,14 @@ function initApp() {
   const now = Math.floor(Date.now() / 1000);
   const monthAgo = now - 30 * SECONDS_PER_DAY;
 
-  // Seed with fallback data and render immediately so mobile users always
-  // see content — API calls can take 5-10 s on slow connections.
+  // Render immediately with fallback data so mobile users always see content
+  // while the real API calls are in progress in the background
   appState.marketRows = FALLBACK_MARKET_ROWS;
   renderMetrics(DEMO_METRICS);
   renderCurrentPage(now, monthAgo);
   bindInteractions();
 
-  // Fetch real data in the background, then re-render to replace fallback.
-  // withTimeout caps each call so a hanging fetch never blocks this step.
+  // Fetch real data, then re-render to replace the fallback content
   Promise.all([
     withTimeout(initGeolocation(), 6000),
     withTimeout(fetchMarketData(), 8000),

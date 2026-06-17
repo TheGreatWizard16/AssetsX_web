@@ -1,5 +1,5 @@
-// Set up Firebase and export the auth instance used across the app.
-// This config comes from the Firebase console under Project Settings.
+// Set up Firebase and export the auth object used across the app.
+// Firebase config comes from the Firebase console under Project Settings.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 

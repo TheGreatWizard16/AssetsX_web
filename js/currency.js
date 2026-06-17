@@ -1,4 +1,4 @@
-// Supported currencies and their approximate conversion rates from USD
+// Approximate USD conversion rates for the four supported currencies
 const RATES = {
   USD: { symbol: '$',  rate: 1.0    },
   EUR: { symbol: '€',  rate: 0.92   },
@@ -12,12 +12,12 @@ export function getCurrency() {
   return { code, ...(RATES[code] || RATES.USD) };
 }
 
-// Save the selected currency code to localStorage so it persists across pages
+// Save the selected currency so it stays the same when navigating between pages
 export function setCurrency(code) {
   if (RATES[code]) localStorage.setItem('assetsx_currency', code);
 }
 
-// Convert a USD number to the selected currency and format it with the right symbol
+// Convert a USD price to the currently selected currency and format it
 export function formatWithCurrency(usdValue) {
   if (typeof usdValue !== 'number') return 'N/A';
   const { symbol, rate } = getCurrency();

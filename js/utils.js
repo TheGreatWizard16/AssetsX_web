@@ -1,12 +1,11 @@
-// Check if a price change string like "+1.25%" or "-0.44%" is going up.
-// If no value is provided, we treat it as positive (green) by default.
+// Check if a price change string like "+1.25%" or "-0.44%" represents a gain.
+// Defaults to true (green) when no value is given.
 export function isTrendUp(changeText) {
   if (!changeText) return true;
   return !changeText.trim().startsWith("-");
 }
 
-// Return a small SVG sparkline graphic, green for up and red for down.
-// These are fixed shapes used as a quick visual indicator in the watchlist.
+// Return a small SVG sparkline — a simple up or down line used in the watchlist.
 export function sparkline(isUp = true) {
   const upPoints = "0,24 14,18 25,20 38,9 51,13 62,4 74,8";
   const downPoints = "0,7 15,11 26,6 39,15 52,12 74,21";
@@ -20,8 +19,8 @@ export function sparkline(isUp = true) {
   `;
 }
 
-// Convert a Unix timestamp (in seconds) to a human-readable "time ago" string.
-// Example: 300 seconds ago becomes "5m ago"
+// Convert a Unix timestamp to a human-readable "time ago" string.
+// For example: 300 seconds ago becomes "5m ago".
 export function formatTimeAgo(timestamp) {
   const secondsAgo = Math.floor(Date.now() / 1000 - timestamp);
 
@@ -37,8 +36,7 @@ export function formatTimeAgo(timestamp) {
   return `${daysAgo}d ago`;
 }
 
-// Show a temporary popup message at the bottom of the screen.
-// We remove any existing toast first to avoid them stacking.
+// Show a short popup message at the bottom of the screen, then fade it out.
 export function showToast(message) {
   const existingToast = document.querySelector(".toast");
   if (existingToast) existingToast.remove();
@@ -48,7 +46,7 @@ export function showToast(message) {
   toast.textContent = message;
   document.body.appendChild(toast);
 
-  // Small delay before adding the "visible" class so the CSS transition plays
+  // Small delay before adding "visible" so the CSS fade-in transition plays
   setTimeout(() => toast.classList.add("visible"), 10);
 
   setTimeout(() => {

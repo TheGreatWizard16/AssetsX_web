@@ -1,4 +1,4 @@
-// Show a "no data" message inside the chart container when the API returns nothing
+// Show a message inside the chart area when no data is available
 function showChartPlaceholder(canvas) {
   canvas.style.display = "none";
 
@@ -11,14 +11,14 @@ function showChartPlaceholder(canvas) {
   canvas.after(placeholder);
 }
 
-// Remove the placeholder before drawing a fresh chart so they don't stack
+// Remove the placeholder before drawing a new chart so they don't overlap
 function removeChartPlaceholder(canvas) {
   const existingPlaceholder = canvas.parentElement.querySelector('.chart-placeholder');
   if (existingPlaceholder) existingPlaceholder.remove();
   canvas.style.display = 'block';
 }
 
-// Draw a price history line chart on a canvas element.
+// Draw a price history line chart on the given canvas element.
 // chartData should be { labels: [...dates], prices: [...numbers] }
 export function initStockChart(canvasId, chartData) {
   const canvas = document.getElementById(canvasId);
@@ -36,14 +36,14 @@ export function initStockChart(canvasId, chartData) {
     return;
   }
 
-  // Read the green color from our CSS variables so the chart matches the theme
+  // Read the green color from CSS variables so the chart matches the theme
   const lineColor = getComputedStyle(document.documentElement).getPropertyValue('--green').trim() || '#4ade80';
 
-  // Destroy the previous chart on this canvas before drawing a new one
+  // Destroy the existing chart on this canvas before drawing a new one,
+  // otherwise Chart.js throws a warning about reusing a canvas
   const existingChart = Chart.getChart(canvasId);
   if (existingChart) existingChart.destroy();
 
-  // Mini charts on the sign-in page don't need point dots
   const isMiniChart = canvasId.includes('mini');
 
   new Chart(canvas, {
@@ -61,7 +61,6 @@ export function initStockChart(canvasId, chartData) {
     },
     options: {
       responsive: true,
-      // maintainAspectRatio false lets the chart fill the parent container's height
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: { x: { display: false }, y: { display: false } },

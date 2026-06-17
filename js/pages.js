@@ -1,5 +1,5 @@
 // Functions that fill in the dynamic content for each page.
-// Each renderXxxPage() maps to a data-page value on the <body> tag.
+// Each renderXxxPage() matches a data-page value on the <body> tag.
 
 import { appState } from './state.js';
 import { fetchStockDetails, fetchStockCandles } from './api.js';
@@ -8,8 +8,8 @@ import { sparkline, isTrendUp, formatTimeAgo } from './utils.js';
 import { DEMO_HOLDINGS, DEMO_PORTFOLIO_SUMMARY, DEMO_ALLOCATION } from './config.js';
 import { formatWithCurrency, getCurrency } from './currency.js';
 
-// Fills the metrics grid (Home + Portfolio) with summary cards.
-// `metrics` is an array of [label, value, detail, isPositive] tuples.
+// Fill the metrics grid with summary cards.
+// Each metric is an array: [label, value, detail, isPositive]
 export function renderMetrics(metrics) {
   const container = document.getElementById('metrics-container');
   if (!container) return;
@@ -23,10 +23,8 @@ export function renderMetrics(metrics) {
   `).join("");
 }
 
-// Builds the HTML for a single news card. `index` is stored on the card
-// as a data attribute so events.js can work out which article was
-// clicked. `isLarge` switches between the small (3-up) and large (2-up)
-// card styles.
+// Build the HTML for a single news card.
+// `index` is stored as a data attribute so the click handler knows which article was clicked.
 export function renderNewsCard(tag, title, copy, img, isLarge = false, timestamp = null, index = null) {
   const maxLength = 110;
   const truncatedCopy = copy && copy.length > maxLength ? `${copy.substring(0, maxLength)}...` : (copy || "");
@@ -47,8 +45,10 @@ export function renderNewsCard(tag, title, copy, img, isLarge = false, timestamp
   `;
 }
 
-// ── Home page ────────────────────────────────────────────────────────────────
 
+// ── Home page ─────────────────────────────────────────────────────────────────
+
+// Render the watchlist sidebar with live price data from appState
 function renderWatchlist() {
   const container = document.getElementById('watchlist-container');
   if (!container) return;
@@ -69,6 +69,7 @@ function renderWatchlist() {
   }).join("");
 }
 
+// Render the three most recent news articles on the home page
 function renderHomeNewsFeed() {
   const container = document.getElementById('news-container');
   if (!container) return;
@@ -77,15 +78,14 @@ function renderHomeNewsFeed() {
     renderNewsCard(tag, title, copy, img, false, time, idx)).join("");
 }
 
-// Looks up a symbol's current price (e.g. "$291.58" -> 291.58) from the
-// already-loaded market rows, so charts can be anchored to it.
+// Look up a stock's current price from appState so the chart can start at the right value
 function getMarketPrice(symbol) {
   const row = appState.marketRows.find(([rowSymbol]) => rowSymbol === symbol);
   if (!row) return undefined;
   return Number(row[2].replace(/[^0-9.-]/g, ''));
 }
 
-// Renders the watchlist, recent news, and the AAPL performance chart.
+// Render the home page: watchlist, news feed, and portfolio performance chart
 export function renderHomePage(now, monthAgo) {
   renderWatchlist();
   renderHomeNewsFeed();
@@ -94,15 +94,16 @@ export function renderHomePage(now, monthAgo) {
   fetchStockCandles('AAPL', 'D', monthAgo, now, aaplPrice).then(data => initStockChart('homeChart', data));
 }
 
-// ── Markets page ─────────────────────────────────────────────────────────────
 
-// Converts a "$173.50" USD price string to the selected currency.
+// ── Markets page ──────────────────────────────────────────────────────────────
+
+// Convert a "$173.50" USD price string to the currently selected currency
 function convertPriceString(priceStr) {
   const usd = parseFloat(priceStr.replace(/[$,]/g, ''));
   return isNaN(usd) ? priceStr : formatWithCurrency(usd);
 }
 
-// Fills the live market price table.
+// Render the live market price table with all watchlist stocks
 export function renderMarketsPage() {
   const tbody = document.getElementById('market-table-body');
   if (!tbody) return;
@@ -123,10 +124,10 @@ export function renderMarketsPage() {
   }).join("");
 }
 
+
 // ── Stock detail page ─────────────────────────────────────────────────────────
 
-// Formatting helpers for the stock detail page. Each returns 'N/A' when
-// the underlying Finnhub field is missing (common on free-tier API keys).
+// Formatting helpers — each returns 'N/A' when the Finnhub field is missing
 function formatPrice(value) {
   return formatWithCurrency(value);
 }
@@ -139,7 +140,7 @@ function formatPercent(value) {
   return typeof value === 'number' ? `${value.toFixed(2)}%` : 'N/A';
 }
 
-// Finnhub reports market cap and trading volume in millions.
+// Finnhub reports market cap and volume in millions, so we convert to B/T as needed
 function formatMarketCap(valueInMillions) {
   if (typeof valueInMillions !== 'number') return 'N/A';
   const { symbol, rate } = getCurrency();
@@ -153,11 +154,14 @@ function formatShares(valueInMillions) {
   return typeof valueInMillions === 'number' ? `${valueInMillions.toFixed(2)}M` : 'N/A';
 }
 
+// Update the page title in the topbar to show the stock symbol
 function renderStockTitle(symbol) {
   const title = document.getElementById('stock-title');
   if (title) title.textContent = `${symbol} Details`;
 }
 
+// Render the hero card at the top of the stock detail page.
+// Shows the logo, company name, current price, and buy/sell buttons.
 function renderStockHero(symbol, details) {
   const hero = document.getElementById('stock-hero');
   if (!hero) return;
@@ -166,18 +170,16 @@ function renderStockHero(symbol, details) {
   const isUp = quote.d >= 0;
   const sign = isUp ? '+' : '';
 
-  // Trim the full Finnhub exchange string ("NASDAQ NMS - GLOBAL MARKET" → "NASDAQ NMS")
+  // Trim the long Finnhub exchange string down to the exchange name only
   const exchange = (profile.exchange || 'N/A').split(' - ')[0];
 
   const logo = profile.logo
     ? `<img class="stock-logo" src="${profile.logo}" alt="${symbol} logo" loading="lazy" onerror="this.outerHTML='<div class=&quot;stock-logo stock-logo-fallback&quot;>${symbol[0]}</div>'">`
     : `<div class="stock-logo stock-logo-fallback">${symbol[0]}</div>`;
 
-  // Add sentiment tint — green border/glow when price is up, red when down
+  // Add a green or red border/glow to the hero card based on price direction
   hero.classList.add(isUp ? 'trend-up' : 'trend-down');
 
-  // Symbol and name come first so the logo centers against prominent text,
-  // tags sit below as secondary info. Price+actions are grouped on the right.
   hero.innerHTML = `
     <div class="stock-identity">
       ${logo}
@@ -200,8 +202,7 @@ function renderStockHero(symbol, details) {
     </div>`;
 }
 
-// Fills the "today's range" row above the chart with the quote's
-// open/high/low/previous close, plus market cap and average volume.
+// Render the quick stats row above the chart: open, high, low, prev close, market cap, volume
 function renderStockQuickStats(details) {
   const container = document.getElementById('stock-quick-stats');
   if (!container) return;
@@ -223,6 +224,7 @@ function renderStockQuickStats(details) {
     </article>`).join("");
 }
 
+// Render the key statistics sidebar on the stock detail page
 function renderStockStats(details) {
   const rows = document.getElementById('stat-rows');
   if (!rows) return;
@@ -242,7 +244,7 @@ function renderStockStats(details) {
     <div class="stat-row"><span>${label}</span><strong class="mono">${value}</strong></div>`).join("");
 }
 
-// Fills the "About" card with company profile details.
+// Render the About card with company profile information
 function renderStockAbout(details) {
   const grid = document.getElementById('stock-about');
   if (!grid) return;
@@ -263,17 +265,17 @@ function renderStockAbout(details) {
     <div class="about-row"><span>${label}</span><strong>${value}</strong></div>`).join("");
 }
 
+// Show the three most recent news articles related to the stock
 function renderStockNews(details) {
   const grid = document.getElementById('stock-news-container');
   if (!grid || !details.news) return;
 
-  // Only show 3 articles so the page doesn't become too long
   grid.innerHTML = details.news.slice(0, 3).map(([tag, title, copy, img, time], idx) =>
     renderNewsCard(tag, title, copy, img, true, time, `stock-${idx}`)).join("");
 }
 
-// Renders a horizontal bar showing where the current price sits within
-// the 52-week range — a common feature in Robinhood, Yahoo Finance, etc.
+// Render the 52-week range bar showing where the current price sits between the low and high.
+// The fill percentage is calculated as: (current - low) / (high - low) * 100
 function renderStockRange(details) {
   const container = document.getElementById('stock-range');
   if (!container) return;
@@ -302,8 +304,8 @@ function renderStockRange(details) {
     </div>`;
 }
 
-// Looks up the symbol from the URL (defaults to AAPL), fetches its
-// details, and fills in the hero, stats, news, and price chart.
+// Render the full stock detail page: hero, stats, chart, news, and range bar.
+// The symbol comes from the URL query string (?symbol=AAPL).
 export function renderStockPage(now, monthAgo) {
   const params = new URLSearchParams(location.search);
   const symbol = params.get('symbol') || 'AAPL';
@@ -323,9 +325,10 @@ export function renderStockPage(now, monthAgo) {
   });
 }
 
+
 // ── Portfolio page ────────────────────────────────────────────────────────────
 
-// Fills the top-line summary card (total value, today's change, total gain).
+// Render the portfolio summary card at the top of the page
 function renderPortfolioSummary() {
   const summary = document.getElementById('portfolio-summary');
   if (!summary) return;
@@ -344,7 +347,7 @@ function renderPortfolioSummary() {
     </div>`;
 }
 
-// Fills the asset allocation stacked bar and its legend.
+// Render the stacked allocation bar and its legend
 function renderPortfolioAllocation() {
   const bar = document.getElementById('allocation-bar');
   const legend = document.getElementById('allocation-legend');
@@ -362,7 +365,7 @@ function renderPortfolioAllocation() {
     </div>`).join("");
 }
 
-// Fills the holdings table with demo portfolio positions.
+// Render the portfolio page: summary, allocation chart, and holdings table
 export function renderPortfolioPage() {
   renderPortfolioSummary();
   renderPortfolioAllocation();
@@ -383,11 +386,11 @@ export function renderPortfolioPage() {
     </div>`).join("");
 }
 
+
 // ── News page ─────────────────────────────────────────────────────────────────
 
-// Looks up a single article by its `id` query parameter. IDs starting
-// with "stock-" refer to a company-specific article cached alongside
-// that stock's details; plain numeric IDs refer to the general news list.
+// Find a news article by its ID from the URL.
+// IDs starting with "stock-" look in the cached stock news; plain numbers look in the general news list.
 function findNewsArticle(newsId) {
   if (!newsId) return null;
 
@@ -401,7 +404,7 @@ function findNewsArticle(newsId) {
   return appState.newsItems[newsId];
 }
 
-// Renders the full-article "reader" view for a single news item.
+// Render a full article reader view for a single news item
 function renderNewsArticle(grid, article) {
   const [tag, title, summary, img, time, url] = article;
 
@@ -418,14 +421,13 @@ function renderNewsArticle(grid, article) {
   `;
 }
 
-// Renders the grid of all general news articles.
+// Render the full news grid
 function renderNewsGrid(grid) {
   grid.innerHTML = appState.newsItems.map(([tag, title, copy, img, time], idx) =>
     renderNewsCard(tag, title, copy, img, true, time, idx)).join("");
 }
 
-// Shows either a single article (if `?id=` is present and found) or the
-// full news grid.
+// Show a single article if ?id= is in the URL, otherwise show the full news grid
 export function renderNewsPage() {
   const params = new URLSearchParams(location.search);
   const newsId = params.get('id');
@@ -441,9 +443,10 @@ export function renderNewsPage() {
   }
 }
 
+
 // ── Auth pages ────────────────────────────────────────────────────────────────
 
-// Draws the small demo chart shown next to the auth forms.
+// Draw the small preview chart shown beside the sign-in form
 export function renderAuthPage() {
   initStockChart('miniChart', { labels: [1, 2, 3, 4, 5], prices: [10, 15, 8, 20, 18] });
 }

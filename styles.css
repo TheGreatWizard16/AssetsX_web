@@ -1,4 +1,5 @@
-/* DESIGN TOKENS: Colors, surfaces, typography, and elevation shadows. */
+/* CSS variables — all colors, shadows, and spacing values are defined here
+   so they can be reused and changed in one place. */
 :root {
   --bg: #0a192f;
   --ink: #0e0e10;
@@ -17,9 +18,8 @@
   --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
   color-scheme: dark;
 
-  /* Override Bootstrap 5 light-mode defaults so its variables don't fight
-   * our dark theme. Bootstrap reads these vars on its own elements, so
-   * pointing them at our values keeps text visible on dark backgrounds. */
+  /* Bootstrap 5 ships with light-mode defaults that fight our dark theme.
+     Overriding its CSS variables here keeps text visible on dark surfaces. */
   --bs-body-color: #e4e2e4;
   --bs-body-bg: #0a192f;
   --bs-heading-color: inherit;
@@ -33,7 +33,7 @@
   --bs-form-control-color: #e4e2e4;
 }
 
-/* GLOBAL RESET: Overrides Bootstrap resets and ensures consistent sizing. */
+/* Global box-sizing reset so padding doesn't break layouts */
 *,
 *::before,
 *::after {
@@ -50,11 +50,10 @@ body {
   font-size: 1rem;
   line-height: 1.5;
   letter-spacing: 0;
-  /* Prevent Bootstrap from changing these */
   -webkit-text-size-adjust: 100%;
 }
 
-/* TYPOGRAPHY & FORMS: Base resets for buttons, inputs, and links. */
+/* Make sure buttons and inputs look consistent with the rest of the page */
 button,
 input {
   font: inherit;
@@ -69,7 +68,7 @@ a {
   text-decoration: none;
 }
 
-/* APP SHELL: The primary layout container for the sidebar and main content. */
+/* Sidebar + main content side by side on desktop */
 .app-shell {
   display: grid;
   min-height: 100vh;
@@ -79,7 +78,7 @@ a {
     var(--bg);
 }
 
-/* SIDEBAR: Desktop navigation menu and branding. */
+/* Sidebar stays visible while the main content scrolls */
 .sidebar {
   position: sticky;
   top: 0;
@@ -178,7 +177,7 @@ a {
   min-width: 0;
 }
 
-/* TOPBAR: Page header containing titles and global actions. */
+/* Top bar with the page title, location, and search/currency controls */
 .topbar {
   display: flex;
   min-height: 72px;
@@ -214,7 +213,7 @@ a {
   gap: 12px;
 }
 
-/* Shared buttons, inputs, and page content spacing. */
+/* Shared button and input styles */
 .search {
   width: min(264px, 30vw);
   height: 42px;
@@ -285,7 +284,7 @@ a {
   padding: 32px;
 }
 
-/* SECTION HEADERS: Layout for page-level headings. */
+/* Page section headings like "Live Market Prices" or "Related News" */
 .dashboard-head {
   margin-bottom: 28px;
 }
@@ -321,7 +320,7 @@ a {
   margin-bottom: 40px;
 }
 
-/* CARDS: Reusable UI containers for metrics, charts, and news. */
+/* Card containers used throughout the app */
 .card {
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -358,7 +357,7 @@ a {
   color: var(--red);
 }
 
-/* DASHBOARD GRID: Structure for the main dashboard content. */
+/* Dashboard layout: chart card on the left, watchlist on the right */
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 364px;
@@ -366,7 +365,7 @@ a {
 }
 
 .chart-card {
-  min-height: 360px;
+  min-height: 280px;
   padding: 22px;
 }
 
@@ -410,18 +409,12 @@ a {
   color: var(--blue);
 }
 
-/* CHARTS: Styles for Chart.js canvases and placeholders. */
-/*
- * Chart.js needs a parent element with a *fixed* height when
- * `maintainAspectRatio: false` is used. Without this wrapper, the
- * canvas's own height feeds back into its parent's height, which
- * feeds back into the canvas's height, growing the chart taller on
- * every resize until the page is enormous.
- */
+/* Chart.js needs a fixed-height parent when maintainAspectRatio is false,
+   otherwise the canvas height grows indefinitely on each resize. */
 .chart-container {
   position: relative;
   width: 100%;
-  height: 250px;
+  height: 200px;
 }
 
 .chart {
@@ -492,7 +485,7 @@ a {
   margin-top: 40px;
 }
 
-/* NEWS CARDS: Styles for market news items. */
+/* News card styles used on the home page and news page */
 .news-card {
   min-height: 138px;
   padding: 0;
@@ -545,7 +538,7 @@ a {
   line-height: 1.45;
 }
 
-/* MARKETS PAGE: Styles for search filters and data tables. */
+/* Markets page: filter bar, search input, and stock data table */
 .filter-bar {
   display: flex;
   align-items: center;
@@ -626,7 +619,7 @@ a {
   color: var(--muted);
 }
 
-/* Colored pill badge for price change % — used in market table and watchlist */
+/* Price change badge — green for gains, red for losses */
 .change-badge {
   display: inline-block;
   padding: 3px 9px;
@@ -668,7 +661,7 @@ a {
   line-height: 1.55;
 }
 
-/* STOCK DETAILS: Specific layout for individual stock view. */
+/* Stock detail page layout */
 .stock-hero {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -680,7 +673,7 @@ a {
   transition: background 0.4s ease;
 }
 
-/* Sentiment tint — green glow when stock is up, red when down */
+/* Add a green or red top border and background tint based on price direction */
 .stock-hero.trend-up {
   border-top-color: rgba(74, 222, 128, 0.65);
   background: linear-gradient(155deg, rgba(74, 222, 128, 0.06) 0%, transparent 55%);
@@ -829,7 +822,7 @@ a {
   margin-top: 4px;
 }
 
-/* Quick stats row: today's open/high/low/close at a glance. */
+/* Quick stats row showing today's open, high, low, close above the chart */
 .quick-stats-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -889,7 +882,7 @@ a {
   font-weight: 800;
 }
 
-/* Company profile ("About") card. */
+/* Company profile card at the bottom of the stock detail page */
 .about-card {
   padding: 24px;
   margin-bottom: 24px;
@@ -932,9 +925,9 @@ a {
   text-decoration: none;
 }
 
-/* PORTFOLIO PAGE: Layout for asset allocation and current holdings. */
+/* Portfolio page */
 
-/* Summary hero: total value, today's change, invested + total gain. */
+/* Summary card: total value, today's change, and total gain */
 .portfolio-summary {
   display: flex;
   flex-wrap: wrap;
@@ -990,7 +983,7 @@ a {
   font-size: 24px;
 }
 
-/* Stacked allocation bar + legend. */
+/* Stacked allocation bar and its legend */
 .allocation-bar {
   display: flex;
   height: 14px;
@@ -1046,7 +1039,7 @@ a {
   font-weight: 800;
 }
 
-/* Holdings table. */
+/* Holdings table showing each stock position */
 .holdings-row {
   display: grid;
   grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr));
@@ -1105,7 +1098,7 @@ a {
   flex: 1;
 }
 
-/* PRO & NEWS: Specific layout for content-heavy pages. */
+/* Pro page and news page layout */
 .news-tabs {
   margin-bottom: 28px;
 }
@@ -1279,7 +1272,7 @@ a {
   line-height: 1.45;
 }
 
-/* Free vs Pro comparison table. */
+/* Free vs Pro feature comparison table */
 .compare-card {
   margin-top: 28px;
   padding: 28px 32px;
@@ -1334,7 +1327,7 @@ a {
   color: var(--muted);
 }
 
-/* AUTHENTICATION: Layout for Sign In and Sign Up screens. */
+/* Sign-in and sign-up page layout */
 .auth-page {
   position: relative;
   display: grid;
@@ -1483,7 +1476,7 @@ a {
   line-height: 1.4;
 }
 
-/* Notification Toast: Temporary feedback element for UI actions. */
+/* Toast notification — shows a short message then fades out */
 .toast {
   position: fixed;
   right: 24px;
@@ -1508,7 +1501,7 @@ a {
   transform: translateY(0);
 }
 
-/* Old fallback style, kept in case an unknown page key is used. */
+/* Fallback empty-state page */
 .placeholder-page {
   max-width: 760px;
 }
@@ -1525,7 +1518,7 @@ a {
   line-height: 1.6;
 }
 
-/* Tablet layout rules. */
+/* Tablet breakpoint — collapse sidebar to a top nav bar */
 /* ── TABLET (≤ 1050px) ─────────────────────────────────────────────── */
 @media (max-width: 1050px) {
 
