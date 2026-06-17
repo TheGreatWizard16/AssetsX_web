@@ -18,8 +18,10 @@
   color-scheme: dark;
 }
 
-/* GLOBAL RESET: Ensuring consistent sizing and font rendering. */
-* {
+/* GLOBAL RESET: Overrides Bootstrap resets and ensures consistent sizing. */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -30,7 +32,11 @@ body {
   color: var(--text);
   font-family: "Hanken Grotesk", Inter, ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
   letter-spacing: 0;
+  /* Prevent Bootstrap from changing these */
+  -webkit-text-size-adjust: 100%;
 }
 
 /* TYPOGRAPHY & FORMS: Base resets for buttons, inputs, and links. */
@@ -1297,6 +1303,8 @@ a {
 }
 
 .field input {
+  display: block;
+  width: 100%;
   height: 50px;
   padding: 0 14px;
   border: 1px solid var(--border);
@@ -1304,6 +1312,10 @@ a {
   background: var(--ink);
   color: var(--text);
   outline: none;
+  box-sizing: border-box;
+  /* Override Bootstrap 5 form-control resets */
+  box-shadow: none;
+  line-height: normal;
 }
 
 .form-row {
@@ -1406,7 +1418,10 @@ a {
 }
 
 /* Tablet layout rules. */
+/* ── TABLET (≤ 1050px) ─────────────────────────────────────────────── */
 @media (max-width: 1050px) {
+
+  /* App shell: collapse sidebar to a horizontal top bar */
   .app-shell {
     grid-template-columns: 1fr;
   }
@@ -1414,7 +1429,11 @@ a {
   .sidebar {
     position: static;
     height: auto;
-    padding: 18px;
+    padding: 12px 18px;
+  }
+
+  .brand {
+    margin: 0 0 12px;
   }
 
   .side-nav {
@@ -1425,13 +1444,34 @@ a {
     display: none;
   }
 
+  /* Topbar */
   .topbar {
     flex-wrap: wrap;
     min-height: auto;
-    padding-block: 18px;
-    gap: 16px;
+    padding-block: 14px;
+    gap: 12px;
   }
 
+  .top-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+  }
+
+  .search {
+    flex: 1 1 180px;
+    width: auto;
+  }
+
+  .currency-select {
+    flex-shrink: 0;
+  }
+
+  /* Content */
+  .content {
+    padding: 24px;
+  }
+
+  /* Dashboard */
   .metrics-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1440,6 +1480,7 @@ a {
     grid-template-columns: 1fr;
   }
 
+  /* Common layout patterns */
   .filter-bar,
   .info-panel,
   .stock-hero {
@@ -1497,18 +1538,47 @@ a {
   }
 
   .news-card.large {
-    min-height: auto; /* Allow height to adjust based on content */
+    min-height: auto;
   }
-  .news-content {
-    padding: 18px; /* Apply original padding here */
-  }
+
+  /* ── Auth pages: single column, compact ── */
   .auth-page {
     grid-template-columns: 1fr;
+    min-height: 100vh;
+    padding: 40px 32px;
+    gap: 20px;
+    align-content: center;
+    align-items: start;
+  }
+
+  /* Hide descriptive copy and mini-chart; keep only the brand mark */
+  .auth-copy h1,
+  .auth-copy > p,
+  .mini-chart-card {
+    display: none;
+  }
+
+  .auth-copy {
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .auth-copy .brand {
+    margin: 0;
+    justify-content: center;
+  }
+
+  /* Center the form card and cap its width */
+  .auth-card {
+    max-width: 440px;
+    margin: 0 auto;
+    width: 100%;
   }
 }
 
-/* Mobile layout rules. */
+/* ── MOBILE (≤ 680px) ──────────────────────────────────────────────── */
 @media (max-width: 680px) {
+
   /* ── Bottom tab bar ── */
   .sidebar {
     position: fixed;
@@ -1524,7 +1594,8 @@ a {
     z-index: 200;
   }
 
-  .brand,
+  /* Only hide the brand inside the sidebar, not on auth pages */
+  .sidebar .brand,
   .sidebar-pro {
     display: none;
   }
@@ -1563,30 +1634,43 @@ a {
     width: auto;
   }
 
-  /* ── Main content clears the tab bar ── */
+  /* ── Main content clears the bottom tab bar ── */
   .main {
-    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
 
   /* ── Spacing ── */
   .content {
-    padding: 20px 16px;
-  }
-
-  .topbar,
-  .auth-page {
-    padding-inline: 16px;
+    padding: 16px;
   }
 
   .topbar {
-    min-height: 60px;
-    padding-block: 12px;
-    gap: 10px;
+    padding: 10px 16px;
+    min-height: 56px;
+    gap: 8px;
+  }
+
+  /* ── Top actions: currency + search stacked ── */
+  .top-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .currency-select {
+    height: 38px;
+    font-size: 12px;
+  }
+
+  .search {
+    flex: 1 1 120px;
+    width: auto;
+    height: 38px;
   }
 
   /* ── Typography ── */
   .page-title {
-    font-size: 19px;
+    font-size: 18px;
   }
 
   .page-subtitle {
@@ -1595,32 +1679,22 @@ a {
 
   .card-head h3,
   .watchlist h3 {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .dashboard-head h2 {
-    font-size: 20px;
+    font-size: 18px;
     margin-bottom: 4px;
-  }
-
-  /* ── Top actions / search ── */
-  .top-actions {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .search {
-    width: 100%;
   }
 
   /* ── Charts ── */
   .chart-card {
     min-height: auto;
-    padding: 16px;
+    padding: 14px;
   }
 
   .chart-container {
-    height: 190px;
+    height: 180px;
   }
 
   /* ── Grids → single column ── */
@@ -1632,13 +1706,14 @@ a {
   }
 
   .news-grid {
-    margin-top: 24px;
-    gap: 16px;
+    margin-top: 20px;
+    gap: 14px;
   }
 
   /* ── Watchlist rows ── */
   .watch-row {
-    grid-template-columns: 54px 1fr 72px;
+    grid-template-columns: 50px 1fr 68px;
+    gap: 8px;
   }
 
   .watch-row .sparkline {
@@ -1652,18 +1727,19 @@ a {
   }
 
   .market-table {
-    min-width: 540px;
+    min-width: 480px;
   }
 
   .market-table th,
   .market-table td {
-    padding: 12px 10px;
-    font-size: 13px;
+    padding: 10px 8px;
+    font-size: 12px;
   }
 
   /* ── Holdings ── */
   .holdings-row {
     grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
   }
 
   .holdings-row .col:nth-child(2),
@@ -1674,7 +1750,8 @@ a {
 
   /* ── Portfolio ── */
   .portfolio-summary-stats {
-    gap: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
   }
 
   .portfolio-summary-stats div {
@@ -1683,21 +1760,77 @@ a {
 
   /* ── Pro page ── */
   .pro-stats {
-    gap: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
   }
 
   .compare-table {
-    grid-template-columns: minmax(0, 1fr) 70px 70px;
+    grid-template-columns: minmax(0, 1fr) 64px 64px;
+    font-size: 13px;
   }
 
-  /* ── Auth ── */
-  .social-row {
-    grid-template-columns: 1fr;
+  /* ── Range tabs: allow wrapping ── */
+  .range-tabs {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .pill {
+    height: 30px;
+    padding: 0 12px;
+    font-size: 10px;
   }
 
   /* ── Cards ── */
   .metric-card,
   .watchlist {
-    padding: 14px 16px;
+    padding: 14px 14px;
+  }
+
+  /* ── Auth pages on mobile ── */
+  .auth-page {
+    grid-template-columns: 1fr;
+    min-height: 100dvh;
+    padding: 24px 16px;
+    gap: 16px;
+    align-content: center;
+    align-items: start;
+    overflow-y: auto;
+  }
+
+  /* Hide entire left section — just show the form */
+  .auth-copy {
+    display: none;
+  }
+
+  .auth-card {
+    max-width: 100%;
+    width: 100%;
+    padding: 24px 18px 20px;
+    margin: auto;
+    /* Prevent card from stretching with form content */
+    align-self: center;
+  }
+
+  .auth-card h2 {
+    font-size: 24px;
+  }
+
+  .field input {
+    height: 46px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+
+  .auth-card .btn.primary {
+    height: 48px;
+  }
+
+  .social-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .social-row .btn {
+    height: 44px;
   }
 }
