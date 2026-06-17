@@ -99,6 +99,18 @@ function renderCurrentPage(now, monthAgo) {
   }
 }
 
+// Sets a time-aware greeting on the home page using the signed-in user's name.
+function updateGreeting() {
+  const el = document.getElementById('greeting-text');
+  if (!el) return;
+
+  const hour = new Date().getHours();
+  const time = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+  const user = auth.currentUser;
+  const name = user?.displayName || user?.email?.split('@')[0] || '';
+  el.textContent = `Good ${time}${name ? `, ${name}` : ''}`;
+}
+
 // Injects a currency selector into .top-actions on every app page.
 // Changing the selection saves the choice and reloads so all prices update.
 function injectCurrencySelector() {
@@ -124,6 +136,7 @@ function injectCurrencySelector() {
 function initApp() {
   bindAuthFormSubmit();
   injectCurrencySelector();
+  updateGreeting();
 
   // Show demo metrics right away so the dashboard isn't empty while
   // real data loads.

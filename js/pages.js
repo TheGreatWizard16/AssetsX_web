@@ -15,7 +15,7 @@ export function renderMetrics(metrics) {
   if (!container) return;
 
   container.innerHTML = metrics.map(([label, value, detail, isPositive]) => `
-    <article class="card metric-card">
+    <article class="card metric-card ${isPositive ? 'metric-up' : 'metric-down'}">
       <div class="label">${label}</div>
       <span class="value">${value}</span>
       <small class="${isPositive ? "up" : "down"} mono">${detail}</small>
@@ -53,11 +53,19 @@ function renderWatchlist() {
   const container = document.getElementById('watchlist-container');
   if (!container) return;
 
-  container.innerHTML = appState.marketRows.map(([symbol, name, price, change]) => `
+  container.innerHTML = appState.marketRows.map(([symbol, name, price, change]) => {
+    const up = isTrendUp(change);
+    return `
     <div class="watch-row" data-symbol="${symbol}">
-      <span class="watch-symbol">${symbol}</span><span class="watch-name">${name}</span>
-      ${sparkline(isTrendUp(change))}<span class="price">${convertPriceString(price)}<small class="${isTrendUp(change) ? 'up' : 'down'}">${change}</small></span>
-    </div>`).join("");
+      <span class="watch-symbol">${symbol}</span>
+      <span class="watch-name">${name}</span>
+      ${sparkline(up)}
+      <span class="price">
+        ${convertPriceString(price)}
+        <small><span class="change-badge ${up ? 'badge-up' : 'badge-down'}">${change}</span></small>
+      </span>
+    </div>`;
+  }).join("");
 }
 
 function renderHomeNewsFeed() {
@@ -98,15 +106,19 @@ export function renderMarketsPage() {
   const tbody = document.getElementById('market-table-body');
   if (!tbody) return;
 
-  tbody.innerHTML = appState.marketRows.map(([symbol, name, price, change, volume]) => `
+  tbody.innerHTML = appState.marketRows.map(([symbol, name, price, change, volume]) => {
+    const up = isTrendUp(change);
+    return `
     <tr data-symbol="${symbol}">
-      <td class="mono strong">${symbol}</td><td>${name}</td>
+      <td class="mono strong">${symbol}</td>
+      <td>${name}</td>
       <td class="mono">${convertPriceString(price)}</td>
-      <td class="mono ${isTrendUp(change) ? 'up' : 'down'}">${change}</td>
+      <td><span class="change-badge ${up ? 'badge-up' : 'badge-down'}">${change}</span></td>
       <td class="mono muted">${volume}</td>
-      <td>${sparkline(isTrendUp(change))}</td>
-      <td><button class="table-action" data-action="trade">Trade</button></td>
-    </tr>`).join("");
+      <td>${sparkline(up)}</td>
+      <td><button class="table-action" data-action="trade" data-symbol="${symbol}">Trade</button></td>
+    </tr>`;
+  }).join("");
 }
 
 // ── Stock detail page ─────────────────────────────────────────────────────────
@@ -158,6 +170,9 @@ function renderStockHero(symbol, details) {
   const logo = profile.logo
     ? `<img class="stock-logo" src="${profile.logo}" alt="${symbol} logo" loading="lazy" onerror="this.outerHTML='<div class=&quot;stock-logo stock-logo-fallback&quot;>${symbol[0]}</div>'">`
     : `<div class="stock-logo stock-logo-fallback">${symbol[0]}</div>`;
+
+  // Add sentiment tint — green border/glow when price is up, red when down
+  hero.classList.add(isUp ? 'trend-up' : 'trend-down');
 
   // Symbol and name come first so the logo centers against prominent text,
   // tags sit below as secondary info. Price+actions are grouped on the right.
@@ -255,6 +270,36 @@ function renderStockNews(details) {
     renderNewsCard(tag, title, copy, img, true, time, `stock-${idx}`)).join("");
 }
 
+// Renders a horizontal bar showing where the current price sits within
+// the 52-week range — a common feature in Robinhood, Yahoo Finance, etc.
+function renderStockRange(details) {
+  const container = document.getElementById('stock-range');
+  if (!container) return;
+
+  const m = details.metrics || {};
+  const low  = m['52WeekLow'];
+  const high = m['52WeekHigh'];
+  const cur  = details.quote.c;
+
+  if (!low || !high || low >= high) { container.style.display = 'none'; return; }
+
+  const pct = Math.min(100, Math.max(0, ((cur - low) / (high - low)) * 100)).toFixed(1);
+
+  container.innerHTML = `
+    <div class="range-header">
+      <span class="label">52-WEEK RANGE</span>
+      <span class="mono muted">${formatPrice(cur)} current</span>
+    </div>
+    <div class="range-track">
+      <div class="range-fill" style="width: ${pct}%"></div>
+      <div class="range-thumb" style="left: ${pct}%"></div>
+    </div>
+    <div class="range-extremes">
+      <span>${formatPrice(low)} low</span>
+      <span>${formatPrice(high)} high</span>
+    </div>`;
+}
+
 // Looks up the symbol from the URL (defaults to AAPL), fetches its
 // details, and fills in the hero, stats, news, and price chart.
 export function renderStockPage(now, monthAgo) {
@@ -267,6 +312,7 @@ export function renderStockPage(now, monthAgo) {
     renderStockTitle(symbol);
     renderStockHero(symbol, details);
     renderStockQuickStats(details);
+    renderStockRange(details);
     renderStockStats(details);
     renderStockAbout(details);
     renderStockNews(details);

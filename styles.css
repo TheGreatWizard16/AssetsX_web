@@ -331,7 +331,11 @@ a {
 
 .metric-card {
   padding: 18px;
+  border-top-width: 2px;
 }
+
+.metric-card.metric-up  { border-top-color: rgba(74, 222, 128, 0.55); }
+.metric-card.metric-down { border-top-color: rgba(248, 113, 113, 0.55); }
 
 .metric-card .label {
   margin-bottom: 10px;
@@ -622,6 +626,20 @@ a {
   color: var(--muted);
 }
 
+/* Colored pill badge for price change % — used in market table and watchlist */
+.change-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge-up   { background: rgba(74, 222, 128, 0.14); color: var(--green); }
+.badge-down { background: rgba(248, 113, 113, 0.14); color: var(--red); }
+
 .table-action {
   border: 0;
   background: transparent;
@@ -658,6 +676,70 @@ a {
   gap: 28px;
   padding: 28px;
   margin-bottom: 24px;
+  border-top-width: 2px;
+  transition: background 0.4s ease;
+}
+
+/* Sentiment tint — green glow when stock is up, red when down */
+.stock-hero.trend-up {
+  border-top-color: rgba(74, 222, 128, 0.65);
+  background: linear-gradient(155deg, rgba(74, 222, 128, 0.06) 0%, transparent 55%);
+}
+
+.stock-hero.trend-down {
+  border-top-color: rgba(248, 113, 113, 0.65);
+  background: linear-gradient(155deg, rgba(248, 113, 113, 0.06) 0%, transparent 55%);
+}
+
+/* 52-week range bar */
+.range-card {
+  padding: 18px 24px;
+  margin-bottom: 24px;
+}
+
+.range-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.range-track {
+  position: relative;
+  height: 6px;
+  background: var(--panel-3);
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.range-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--red) 0%, var(--accent) 50%, var(--green) 100%);
+  border-radius: 999px;
+  max-width: 100%;
+}
+
+.range-thumb {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  background: var(--text);
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.range-extremes {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .stock-identity {
