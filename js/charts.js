@@ -1,3 +1,31 @@
+// Draw a doughnut chart for the asset allocation card
+export function initDoughnutChart(canvasId, data) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  const existing = Chart.getChart(canvasId);
+  if (existing) existing.destroy();
+
+  new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        data: data.values,
+        backgroundColor: data.colors,
+        borderWidth: 0,
+        hoverOffset: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      cutout: '72%',
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    },
+  });
+}
+
 // Show a message inside the chart area when no data is available
 function showChartPlaceholder(canvas) {
   canvas.style.display = "none";

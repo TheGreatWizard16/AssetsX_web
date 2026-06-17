@@ -929,13 +929,34 @@ a {
 
 /* Summary card: total value, today's change, and total gain */
 .portfolio-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 28px;
-  padding: 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 440px;
+  gap: 32px;
+  padding: 32px;
   margin-bottom: 24px;
+}
+
+.portfolio-summary-left {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.portfolio-summary-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Push range tabs to the right edge inside the chart panel */
+.portfolio-summary-right .range-tabs {
+  justify-content: flex-end;
+}
+
+.portfolio-mini-chart {
+  flex: 1;
+  min-height: 130px;
+  position: relative;
 }
 
 .portfolio-balance h2 {
@@ -944,26 +965,32 @@ a {
   line-height: 1;
 }
 
-.portfolio-summary-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 36px;
+/* Three boxed stat tiles: Invested, Gain, Holdings */
+.portfolio-stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
-.portfolio-summary-stats div {
-  text-align: right;
+.portfolio-stat-tile {
+  padding: 14px 16px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
 
-.portfolio-summary-stats span {
+.portfolio-stat-tile > span {
   display: block;
   margin-bottom: 6px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.portfolio-summary-stats strong {
-  font-size: 18px;
+.portfolio-stat-tile strong {
+  font-size: 17px;
 }
 
 .portfolio-grid {
@@ -983,19 +1010,11 @@ a {
   font-size: 24px;
 }
 
-/* Stacked allocation bar and its legend */
-.allocation-bar {
-  display: flex;
-  height: 14px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--panel-3);
-  margin: 28px 0 24px;
-}
-
-.allocation-bar span {
-  display: block;
-  height: 100%;
+/* Donut chart container for asset allocation */
+.allocation-donut-wrap {
+  width: 160px;
+  height: 160px;
+  margin: 24px auto 20px;
 }
 
 .allocation-legend {
@@ -1039,14 +1058,25 @@ a {
   font-weight: 800;
 }
 
-/* Holdings table showing each stock position */
+/* Holdings table: asset | avg cost | price | value | sparkline | gain */
 .holdings-row {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) 56px minmax(0, 1fr);
   align-items: center;
   gap: 14px;
   min-height: 62px;
   border-bottom: 1px solid var(--line);
+}
+
+.sparkline-col {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.sparkline-col svg {
+  width: 44px;
+  height: 24px;
 }
 
 .holdings-row:last-child {
@@ -1609,13 +1639,14 @@ a {
     grid-template-columns: 1fr;
   }
 
+  /* Stack summary card vertically on tablet */
   .portfolio-summary {
-    align-items: flex-start;
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
+  /* At tablet: show asset, value, sparkline, gain — hide avg cost and price */
   .holdings-row {
-    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 2fr) 1fr 56px 1fr;
   }
 
   .holdings-row span:nth-child(2),
@@ -1868,20 +1899,34 @@ a {
     gap: 8px;
   }
 
+  /* On mobile: show only asset and gain, hide everything else */
   .holdings-row .col:nth-child(2),
   .holdings-row .col:nth-child(3),
-  .holdings-row .col:nth-child(4) {
+  .holdings-row .col:nth-child(4),
+  .holdings-row .col:nth-child(5) {
     display: none;
   }
 
   /* ── Portfolio ── */
-  .portfolio-summary-stats {
-    gap: 16px;
-    flex-wrap: wrap;
+  .portfolio-summary {
+    grid-template-columns: 1fr;
   }
 
-  .portfolio-summary-stats div {
-    text-align: left;
+  /* Hide the performance chart on mobile to save space */
+  .portfolio-summary-right {
+    display: none;
+  }
+
+  .portfolio-stat-tiles {
+    gap: 8px;
+  }
+
+  .portfolio-stat-tile {
+    padding: 10px 12px;
+  }
+
+  .portfolio-stat-tile strong {
+    font-size: 15px;
   }
 
   /* ── Pro page ── */

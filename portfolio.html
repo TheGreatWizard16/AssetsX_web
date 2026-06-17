@@ -41,11 +41,11 @@
           </section>
 
           <section class="portfolio-grid">
-            <!-- Asset allocation bar -->
+            <!-- Asset allocation donut chart -->
             <article class="card allocation-card">
               <h3>Asset Allocation</h3>
-              <div id="allocation-bar" class="allocation-bar">
-                <!-- Filled by main.js -->
+              <div class="allocation-donut-wrap">
+                <canvas id="allocationChart"></canvas>
               </div>
               <div id="allocation-legend" class="allocation-legend">
                 <!-- Filled by main.js -->
@@ -64,6 +64,7 @@
                   <span class="col">Avg Cost</span>
                   <span class="col">Price</span>
                   <span class="col">Value</span>
+                  <span class="col">Trend</span>
                   <span class="col">Gain</span>
                 </div>
                 <div id="holdings-container">

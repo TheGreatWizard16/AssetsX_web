@@ -73,6 +73,14 @@ export const DEMO_ALLOCATION = [
   { label: "BTC", value: "$9,450.00", pct: 39.2, color: "#e7bf99" },
 ];
 
+// Demo portfolio value history for the performance chart on the portfolio page
+export const DEMO_PORTFOLIO_CHART = {
+  labels: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
+  prices: [22300, 22450, 22380, 22600, 22750, 22680, 22900, 23100, 23050, 23200,
+           23350, 23280, 23500, 23600, 23450, 23700, 23850, 23780, 24000, 23900,
+           24100, 24050, 24200, 24300, 24180, 24350, 24280, 24400, 24250, 24140],
+};
+
 // Demo holdings for the portfolio table
 export const DEMO_HOLDINGS = [
   { symbol: "AAPL", name: "Apple Inc.", shares: "45 shares", avgCost: "$162.10", price: "$174.45", value: "$7,850.25", totalGain: "+7.6%" },

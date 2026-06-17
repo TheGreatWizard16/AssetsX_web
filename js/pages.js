@@ -3,9 +3,9 @@
 
 import { appState } from './state.js';
 import { fetchStockDetails, fetchStockCandles } from './api.js';
-import { initStockChart } from './charts.js';
+import { initStockChart, initDoughnutChart } from './charts.js';
 import { sparkline, isTrendUp, formatTimeAgo } from './utils.js';
-import { DEMO_HOLDINGS, DEMO_PORTFOLIO_SUMMARY, DEMO_ALLOCATION } from './config.js';
+import { DEMO_HOLDINGS, DEMO_PORTFOLIO_SUMMARY, DEMO_ALLOCATION, DEMO_PORTFOLIO_CHART } from './config.js';
 import { formatWithCurrency, getCurrency } from './currency.js';
 
 // Fill the metrics grid with summary cards.
@@ -328,33 +328,57 @@ export function renderStockPage(now, monthAgo) {
 
 // ── Portfolio page ────────────────────────────────────────────────────────────
 
-// Render the portfolio summary card at the top of the page
+// Render the portfolio summary card — left side has balance + stat tiles, right has a performance chart
 function renderPortfolioSummary() {
   const summary = document.getElementById('portfolio-summary');
   if (!summary) return;
 
   const s = DEMO_PORTFOLIO_SUMMARY;
   summary.innerHTML = `
-    <div class="portfolio-balance">
-      <p class="eyebrow">TOTAL PORTFOLIO VALUE</p>
-      <h2 class="mono">${s.totalValue}</h2>
-      <span class="price-change mono ${isTrendUp(s.todayChange) ? 'up' : 'down'}">${s.todayChange} today</span>
+    <div class="portfolio-summary-left">
+      <div class="portfolio-balance">
+        <p class="eyebrow">TOTAL PORTFOLIO VALUE</p>
+        <h2 class="mono">${s.totalValue}</h2>
+        <span class="price-change mono ${isTrendUp(s.todayChange) ? 'up' : 'down'}">${s.todayChange} today</span>
+      </div>
+      <div class="portfolio-stat-tiles">
+        <div class="portfolio-stat-tile">
+          <span>Invested</span>
+          <strong class="mono">${s.invested}</strong>
+        </div>
+        <div class="portfolio-stat-tile">
+          <span>Total Gain</span>
+          <strong class="mono ${isTrendUp(s.totalGain) ? 'up' : 'down'}">${s.totalGain}</strong>
+        </div>
+        <div class="portfolio-stat-tile">
+          <span>Holdings</span>
+          <strong class="mono">${DEMO_HOLDINGS.length} assets</strong>
+        </div>
+      </div>
     </div>
-    <div class="portfolio-summary-stats">
-      <div><span>Invested</span><strong class="mono">${s.invested}</strong></div>
-      <div><span>Total Gain</span><strong class="mono ${isTrendUp(s.totalGain) ? 'up' : 'down'}">${s.totalGain}</strong></div>
-      <div><span>Holdings</span><strong class="mono">${DEMO_HOLDINGS.length} assets</strong></div>
-    </div>`;
+    <div class="portfolio-summary-right">
+      <div class="range-tabs">
+        <span class="pill active">1M</span>
+        <span class="pill">3M</span>
+        <span class="pill">1Y</span>
+      </div>
+      <div class="portfolio-mini-chart">
+        <canvas id="portfolioChart" class="chart"></canvas>
+      </div>
+    </div>
+  `;
 }
 
-// Render the stacked allocation bar and its legend
+// Render the donut chart and legend for asset allocation
 function renderPortfolioAllocation() {
-  const bar = document.getElementById('allocation-bar');
   const legend = document.getElementById('allocation-legend');
-  if (!bar || !legend) return;
+  if (!legend) return;
 
-  bar.innerHTML = DEMO_ALLOCATION.map(({ pct, color }) =>
-    `<span style="width: ${pct}%; background: ${color};"></span>`).join("");
+  initDoughnutChart('allocationChart', {
+    labels: DEMO_ALLOCATION.map(a => a.label),
+    values: DEMO_ALLOCATION.map(a => a.pct),
+    colors: DEMO_ALLOCATION.map(a => a.color),
+  });
 
   legend.innerHTML = DEMO_ALLOCATION.map(({ label, value, pct, color }) => `
     <div class="allocation-legend-row">
@@ -365,15 +389,19 @@ function renderPortfolioAllocation() {
     </div>`).join("");
 }
 
-// Render the portfolio page: summary, allocation chart, and holdings table
+// Render the portfolio page: summary card with chart, donut allocation, and holdings with sparklines
 export function renderPortfolioPage() {
   renderPortfolioSummary();
+  // Chart canvas is now in the DOM after renderPortfolioSummary injects it
+  initStockChart('portfolioChart', DEMO_PORTFOLIO_CHART);
   renderPortfolioAllocation();
 
   const container = document.getElementById('holdings-container');
   if (!container) return;
 
-  container.innerHTML = DEMO_HOLDINGS.map(({ symbol, name, shares, avgCost, price, value, totalGain }) => `
+  container.innerHTML = DEMO_HOLDINGS.map(({ symbol, name, shares, avgCost, price, value, totalGain }) => {
+    const up = isTrendUp(totalGain);
+    return `
     <div class="holdings-row">
       <div class="asset-name">
         <span class="ticker-avatar">${symbol[0]}</span>
@@ -382,8 +410,10 @@ export function renderPortfolioPage() {
       <span class="col mono">${avgCost}</span>
       <span class="col mono">${price}</span>
       <span class="col mono">${value}</span>
-      <span class="col mono ${isTrendUp(totalGain) ? 'up' : 'down'}">${totalGain}</span>
-    </div>`).join("");
+      <span class="col sparkline-col">${sparkline(up)}</span>
+      <span class="col mono ${up ? 'up' : 'down'}">${totalGain}</span>
+    </div>`;
+  }).join("");
 }
 
 
