@@ -1705,6 +1705,10 @@ a {
   /* ── Bottom tab bar ── */
   .sidebar {
     position: fixed;
+    /* top: 0 is inherited from the sticky base rule — reset it explicitly,
+     * otherwise fixed + top: 0 + bottom: 0 stretches the sidebar to cover
+     * the entire screen (the root cause of the mobile black screen). */
+    top: auto;
     bottom: 0;
     left: 0;
     right: 0;
@@ -1761,7 +1765,9 @@ a {
   .main {
     display: block;
     width: 100%;
-    min-height: 100dvh;
+    min-height: 100vh;    /* fallback for Safari < 15.4 */
+    min-height: 100dvh;   /* dynamic viewport height (excludes browser chrome) */
+    padding-bottom: 64px; /* fallback if env() unsupported */
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
     color: var(--text);
   }
@@ -1917,6 +1923,7 @@ a {
   /* ── Auth pages on mobile ── */
   .auth-page {
     grid-template-columns: 1fr;
+    min-height: 100vh;
     min-height: 100dvh;
     padding: 24px 16px;
     gap: 16px;

@@ -3,7 +3,8 @@
 
 import { initGeolocation, fetchMarketData, fetchGeneralNews } from './api.js';
 import { bindInteractions } from './events.js';
-import { DEMO_METRICS } from './config.js';
+import { DEMO_METRICS, FALLBACK_MARKET_ROWS } from './config.js';
+import { appState } from './state.js';
 import { auth } from './firebase.js';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import { showToast } from './utils.js';
@@ -132,23 +133,36 @@ function injectCurrencySelector() {
   actions.prepend(select);
 }
 
+// Race a promise against a timeout so a slow mobile network can't block
+// rendering indefinitely. Resolves (never rejects) after `ms` milliseconds.
+function withTimeout(promise, ms) {
+  return Promise.race([promise, new Promise(resolve => setTimeout(resolve, ms))]);
+}
+
 // Main app startup.
 function initApp() {
   bindAuthFormSubmit();
   injectCurrencySelector();
   updateGreeting();
 
-  // Show demo metrics right away so the dashboard isn't empty while
-  // real data loads.
+  const now = Math.floor(Date.now() / 1000);
+  const monthAgo = now - 30 * SECONDS_PER_DAY;
+
+  // Seed with fallback data and render immediately so mobile users always
+  // see content — API calls can take 5-10 s on slow connections.
+  appState.marketRows = FALLBACK_MARKET_ROWS;
   renderMetrics(DEMO_METRICS);
+  renderCurrentPage(now, monthAgo);
+  bindInteractions();
 
-  Promise.all([initGeolocation(), fetchMarketData(), fetchGeneralNews()]).then(() => {
-    const now = Math.floor(Date.now() / 1000);
-    const monthAgo = now - 30 * SECONDS_PER_DAY;
-
+  // Fetch real data in the background, then re-render to replace fallback.
+  // withTimeout caps each call so a hanging fetch never blocks this step.
+  Promise.all([
+    withTimeout(initGeolocation(), 6000),
+    withTimeout(fetchMarketData(), 8000),
+    withTimeout(fetchGeneralNews(), 8000),
+  ]).then(() => {
     renderCurrentPage(now, monthAgo);
-
-    // Bind interactions AFTER the DOM has been populated with dynamic rows.
     bindInteractions();
   });
 }
