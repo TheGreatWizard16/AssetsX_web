@@ -652,10 +652,9 @@ a {
 
 /* STOCK DETAILS: Specific layout for individual stock view. */
 .stock-hero {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: 28px;
   padding: 28px;
   margin-bottom: 24px;
@@ -704,6 +703,10 @@ a {
 }
 
 .stock-price-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
   text-align: right;
 }
 
@@ -737,6 +740,7 @@ a {
 .pro-actions {
   display: flex;
   gap: 12px;
+  margin-top: 4px;
 }
 
 /* Quick stats row: today's open/high/low/close at a glance. */
@@ -1500,10 +1504,19 @@ a {
 
   /* Common layout patterns */
   .filter-bar,
-  .info-panel,
-  .stock-hero {
+  .info-panel {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  /* Collapse stock hero to single column on tablet */
+  .stock-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .stock-price-block {
+    align-items: flex-start;
+    text-align: left;
   }
 
   .filter-bar,

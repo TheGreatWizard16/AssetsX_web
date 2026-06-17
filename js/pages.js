@@ -151,16 +151,22 @@ function renderStockHero(symbol, details) {
   const { profile, quote } = details;
   const isUp = quote.d >= 0;
   const sign = isUp ? '+' : '';
+
+  // Trim the full Finnhub exchange string ("NASDAQ NMS - GLOBAL MARKET" → "NASDAQ NMS")
+  const exchange = (profile.exchange || 'N/A').split(' - ')[0];
+
   const logo = profile.logo
     ? `<img class="stock-logo" src="${profile.logo}" alt="${symbol} logo" loading="lazy" onerror="this.outerHTML='<div class=&quot;stock-logo stock-logo-fallback&quot;>${symbol[0]}</div>'">`
     : `<div class="stock-logo stock-logo-fallback">${symbol[0]}</div>`;
 
+  // Price block and Sell/Buy buttons are grouped on the right so the hero
+  // always renders as two columns: identity left, price+actions right.
   hero.innerHTML = `
     <div class="stock-identity">
       ${logo}
       <div>
         <div class="stock-tags">
-          <span class="pill active">${profile.exchange || 'N/A'}</span>
+          <span class="pill active">${exchange}</span>
           ${profile.finnhubIndustry ? `<span class="pill">${profile.finnhubIndustry}</span>` : ''}
         </div>
         <h2>${symbol}</h2>
@@ -170,8 +176,11 @@ function renderStockHero(symbol, details) {
     <div class="stock-price-block">
       <strong class="mono">${formatPrice(quote.c)}</strong>
       <span class="price-change mono ${isUp ? 'up' : 'down'}">${sign}${quote.d.toFixed(2)} (${sign}${quote.dp.toFixed(2)}%)</span>
-    </div>
-    <div class="stock-actions"><button class="btn" data-action="sell">Sell</button><button class="btn primary" data-action="buy">Buy</button></div>`;
+      <div class="stock-actions">
+        <button class="btn" data-action="sell">Sell</button>
+        <button class="btn primary" data-action="buy">Buy</button>
+      </div>
+    </div>`;
 }
 
 // Fills the "today's range" row above the chart with the quote's
@@ -241,7 +250,8 @@ function renderStockNews(details) {
   const grid = document.getElementById('stock-news-container');
   if (!grid || !details.news) return;
 
-  grid.innerHTML = details.news.map(([tag, title, copy, img, time], idx) =>
+  // Only show 3 articles so the page doesn't become too long
+  grid.innerHTML = details.news.slice(0, 3).map(([tag, title, copy, img, time], idx) =>
     renderNewsCard(tag, title, copy, img, true, time, `stock-${idx}`)).join("");
 }
 
