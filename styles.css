@@ -1358,62 +1358,118 @@ a {
 }
 
 /* Sign-in and sign-up page layout */
+/* Auth pages — sign in and sign up. Dark left panel + form on the right. */
 .auth-page {
-  position: relative;
   display: grid;
   min-height: 100vh;
-  grid-template-columns: minmax(0, 1fr) 420px;
-  gap: clamp(48px, 9vw, 140px);
-  align-items: center;
+  min-height: 100dvh;
+  grid-template-columns: minmax(0, 1fr) 520px;
+  gap: 0;
+  align-items: stretch;
   overflow: hidden;
-  padding: clamp(48px, 7vw, 92px) clamp(32px, 10vw, 120px);
   background:
-    radial-gradient(circle at 10% 8%, rgba(185, 199, 228, 0.22), transparent 28%),
-    radial-gradient(circle at 75% 86%, rgba(35, 49, 72, 0.45), transparent 30%),
+    radial-gradient(circle at 78% 88%, rgba(35, 49, 72, 0.55), transparent 30%),
     var(--bg);
 }
 
+/* Left panel — dark background, brand at top, features in middle, chart at bottom */
 .auth-copy {
-  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  max-width: none;
+  padding: clamp(40px, 5.5vw, 64px) clamp(44px, 5.5vw, 64px);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(185, 199, 228, 0.15), transparent 42%),
+    var(--ink);
+  border-right: 1px solid rgba(68, 71, 77, 0.5);
 }
 
 .auth-copy .brand {
-  margin: 0 0 88px;
+  margin: 0;
 }
 
-.auth-copy h1 {
-  max-width: 540px;
-  margin: 0 0 22px;
-  font-size: clamp(42px, 5vw, 58px);
-  line-height: 1.08;
+/* Middle section — stretches to fill remaining height, content vertically centered */
+.auth-copy-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 0;
 }
 
-.auth-copy > p {
-  max-width: 520px;
-  margin: 0 0 60px;
+.auth-copy-body h1 {
+  margin: 0 0 18px;
+  font-size: clamp(34px, 3.8vw, 50px);
+  line-height: 1.1;
+}
+
+.auth-copy-body > p {
+  margin: 0 0 36px;
   color: var(--muted);
-  font-size: 18px;
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.6;
+  max-width: 400px;
 }
 
+/* Three feature bullet points */
+.auth-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.auth-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.auth-feat-mark {
+  margin-top: 1px;
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: 16px;
+}
+
+/* Chart preview card sits at the bottom of the left panel */
 .mini-chart-card {
-  max-width: 500px;
-  padding: 22px;
+  padding: 18px 20px;
 }
 
+.mini-chart-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.auth-mini-chart {
+  position: relative;
+  height: 110px;
+}
+
+/* Right panel — form card centered vertically within the column */
 .auth-card {
-  padding: 38px 32px 28px;
+  align-self: center;
+  padding: 40px 36px 32px;
+  margin: 48px 44px;
   border-radius: 18px;
   box-shadow: var(--shadow);
 }
 
 .auth-card h2 {
   margin: 0 0 8px;
-  font-size: 32px;
+  font-size: 30px;
 }
 
 .auth-card > p {
-  margin: 0 0 30px;
+  margin: 0 0 28px;
   color: var(--muted);
 }
 
@@ -1464,24 +1520,58 @@ a {
 
 .auth-card .btn.primary {
   width: 100%;
-  height: 54px;
-  margin-top: 12px;
+  height: 52px;
+  margin-top: 10px;
+}
+
+/* "or continue with" divider between form and social buttons */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0 16px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
 }
 
 .social-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 18px;
+  gap: 10px;
 }
 
-.social-row .btn {
-  padding-inline: 8px;
-  font-size: 13px;
-  height: 48px;
+/* Social login button with a small letter circle (G or A) */
+.social-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 9px;
+  height: 46px;
+  padding-inline: 10px;
+  font-size: 13px;
+}
+
+.social-letter {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
 }
 
 .auth-switch,
@@ -1491,7 +1581,7 @@ a {
 }
 
 .auth-switch {
-  margin: 34px 0 0;
+  margin: 28px 0 0;
   font-size: 14px;
 }
 
@@ -1501,7 +1591,7 @@ a {
 }
 
 .legal {
-  margin: 28px 0 0;
+  margin: 20px 0 0;
   font-size: 12px;
   line-height: 1.4;
 }
@@ -1682,38 +1772,44 @@ a {
     min-height: auto;
   }
 
-  /* ── Auth pages: single column, compact ── */
+  /* ── Auth pages: stack to single column on tablet ── */
   .auth-page {
     grid-template-columns: 1fr;
     min-height: 100vh;
-    padding: 40px 32px;
-    gap: 20px;
-    align-content: center;
+    padding: 48px 32px;
+    gap: 28px;
     align-items: start;
+    align-content: center;
+    /* Restore page gradient since the dark left panel is hidden */
+    background:
+      radial-gradient(circle at 10% 8%, rgba(185, 199, 228, 0.18), transparent 28%),
+      var(--bg);
   }
 
-  /* Hide descriptive copy and mini-chart; keep only the brand mark */
-  .auth-copy h1,
-  .auth-copy > p,
-  .mini-chart-card {
-    display: none;
-  }
-
+  /* Remove left panel background and show just the brand */
   .auth-copy {
-    max-width: 100%;
+    background: transparent;
+    border-right: none;
+    padding: 0;
     text-align: center;
   }
 
   .auth-copy .brand {
-    margin: 0;
     justify-content: center;
   }
 
-  /* Center the form card and cap its width */
+  /* Hide the hero text, features, and chart — just the brand shows */
+  .auth-copy-body,
+  .mini-chart-card {
+    display: none;
+  }
+
+  /* Center the form card */
   .auth-card {
-    max-width: 440px;
+    max-width: 480px;
     margin: 0 auto;
     width: 100%;
+    padding: 38px 32px 28px;
   }
 }
 
@@ -1963,14 +2059,17 @@ a {
     grid-template-columns: 1fr;
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 24px 16px;
-    gap: 16px;
+    padding: 28px 16px;
+    gap: 20px;
     align-content: center;
     align-items: start;
     overflow-y: auto;
+    background:
+      radial-gradient(circle at 10% 8%, rgba(185, 199, 228, 0.18), transparent 28%),
+      var(--bg);
   }
 
-  /* Hide entire left section — just show the form */
+  /* Hide the entire left panel on mobile — form only */
   .auth-copy {
     display: none;
   }
@@ -1978,9 +2077,8 @@ a {
   .auth-card {
     max-width: 100%;
     width: 100%;
-    padding: 24px 18px 20px;
-    margin: auto;
-    /* Prevent card from stretching with form content */
+    padding: 28px 20px 24px;
+    margin: 0 auto;
     align-self: center;
   }
 
@@ -1990,7 +2088,7 @@ a {
 
   .field input {
     height: 46px;
-    font-size: 16px; /* Prevents iOS zoom on focus */
+    font-size: 16px; /* prevents iOS auto-zoom on focus */
   }
 
   .auth-card .btn.primary {
@@ -1999,10 +2097,10 @@ a {
 
   .social-row {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 8px;
   }
 
-  .social-row .btn {
+  .social-btn {
     height: 44px;
   }
 }

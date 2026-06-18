@@ -476,7 +476,10 @@ export function renderNewsPage() {
 
 // ── Auth pages ────────────────────────────────────────────────────────────────
 
-// Draw the small preview chart shown beside the sign-in form
+// Draw the preview chart on the auth page left panel
 export function renderAuthPage() {
-  initStockChart('miniChart', { labels: [1, 2, 3, 4, 5], prices: [10, 15, 8, 20, 18] });
+  initStockChart('miniChart', {
+    labels: Array.from({ length: 20 }, (_, i) => i + 1),
+    prices: [18, 22, 19, 25, 23, 28, 26, 30, 27, 32, 31, 35, 33, 38, 36, 40, 38, 43, 41, 45],
+  });
 }

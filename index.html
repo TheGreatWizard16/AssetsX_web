@@ -11,17 +11,44 @@
   </head>
   <body data-page="signin">
     <main class="auth-page">
+
       <!-- Left side: branding and mini chart -->
       <section class="auth-copy">
         <a class="brand" href="index.html">
           <span class="brand-mark">X</span>
           <span class="brand-name">AssetsX</span>
         </a>
-        <p>A cleaner web companion to the mobile app.</p>
-        <h1>Sign in to AssetsX</h1>
-        <p>Track your portfolio, markets, and alerts from the same account used on mobile.</p>
+
+        <!-- Hero text and feature bullets, vertically centered -->
+        <div class="auth-copy-body">
+          <h1>Trade smarter.<br>Track everything.</h1>
+          <p>Real-time prices, portfolio tracking, and market news — all in one place.</p>
+
+          <ul class="auth-features">
+            <li class="auth-feature">
+              <span class="auth-feat-mark">◈</span>
+              <span>Live prices for global stocks and ETFs</span>
+            </li>
+            <li class="auth-feature">
+              <span class="auth-feat-mark">▰</span>
+              <span>Portfolio performance and asset allocation</span>
+            </li>
+            <li class="auth-feature">
+              <span class="auth-feat-mark">≡</span>
+              <span>Curated market news, updated daily</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Chart card at the bottom of the panel -->
         <div class="card mini-chart-card">
-          <canvas id="miniChart" class="chart"></canvas>
+          <div class="mini-chart-label">
+            <span class="eyebrow">Portfolio Preview</span>
+            <span class="price-change up mono">+2.46%</span>
+          </div>
+          <div class="auth-mini-chart">
+            <canvas id="miniChart" class="chart"></canvas>
+          </div>
         </div>
       </section>
 
@@ -43,15 +70,22 @@
           </div>
           <button class="btn primary" type="submit">Sign In</button>
         </form>
+        <!-- Divider between form and social login buttons -->
+        <div class="auth-divider"><span>or continue with</span></div>
         <div class="social-row">
-          <button class="btn" type="button" data-action="social-google">Continue with Google</button>
-          <button class="btn" type="button" data-action="social-apple">Continue with Apple</button>
+          <button class="btn social-btn" type="button" data-action="social-google">
+            <span class="social-letter">G</span>Google
+          </button>
+          <button class="btn social-btn" type="button" data-action="social-apple">
+            <span class="social-letter">A</span>Apple
+          </button>
         </div>
         <p class="auth-switch">
           No account? <a href="signup.html">Create one</a>
         </p>
         <p class="legal">By continuing you agree to AssetsX terms and privacy policy.</p>
       </section>
+
     </main>
     <script type="module" src="js/main.js"></script>
   </body>

@@ -11,21 +11,48 @@
   </head>
   <body data-page="signup">
     <main class="auth-page">
+
+      <!-- Left panel: branding, feature list, and mini chart preview -->
       <section class="auth-copy">
         <a class="brand" href="index.html">
           <span class="brand-mark">X</span>
           <span class="brand-name">AssetsX</span>
         </a>
-        <p>A cleaner web companion to the mobile app.</p>
-        <h1>Create your AssetsX account</h1>
-        <p>Join the next generation of trading with insights synced across devices.</p>
+
+        <!-- Hero text and feature bullets, vertically centered -->
+        <div class="auth-copy-body">
+          <h1>Your markets.<br>Your portfolio.</h1>
+          <p>Join thousands of traders tracking global markets with AssetsX.</p>
+
+          <ul class="auth-features">
+            <li class="auth-feature">
+              <span class="auth-feat-mark">◈</span>
+              <span>Live prices for global stocks and ETFs</span>
+            </li>
+            <li class="auth-feature">
+              <span class="auth-feat-mark">▰</span>
+              <span>Portfolio performance and asset allocation</span>
+            </li>
+            <li class="auth-feature">
+              <span class="auth-feat-mark">≡</span>
+              <span>Curated market news, updated daily</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Chart card at the bottom of the panel -->
         <div class="card mini-chart-card">
-          <div class="chart-container">
+          <div class="mini-chart-label">
+            <span class="eyebrow">Portfolio Preview</span>
+            <span class="price-change up mono">+2.46%</span>
+          </div>
+          <div class="auth-mini-chart">
             <canvas id="miniChart" class="chart"></canvas>
           </div>
         </div>
       </section>
 
+      <!-- Right side: sign-up form -->
       <section class="card auth-card">
         <h2>Create account</h2>
         <p>Start tracking markets in seconds.</p>
@@ -44,15 +71,22 @@
           </div>
           <button class="btn primary" type="submit">Create Account</button>
         </form>
+        <!-- Divider between form and social login buttons -->
+        <div class="auth-divider"><span>or continue with</span></div>
         <div class="social-row">
-          <button class="btn" type="button" data-action="social-google">Continue with Google</button>
-          <button class="btn" type="button" data-action="social-apple">Continue with Apple</button>
+          <button class="btn social-btn" type="button" data-action="social-google">
+            <span class="social-letter">G</span>Google
+          </button>
+          <button class="btn social-btn" type="button" data-action="social-apple">
+            <span class="social-letter">A</span>Apple
+          </button>
         </div>
         <p class="auth-switch">
           Already have an account? <a href="signin.html">Sign in</a>
         </p>
         <p class="legal">By continuing you agree to AssetsX terms and privacy policy.</p>
       </section>
+
     </main>
     <script type="module" src="js/main.js"></script>
   </body>
