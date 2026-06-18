@@ -52,9 +52,9 @@ export const FALLBACK_QUOTE = { c: 150.0, d: 1.25, dp: 0.85 };
 
 // Placeholder data shown on the dashboard cards while real market data loads
 export const DEMO_METRICS = [
-  ["PORTFOLIO VALUE", "$42,850", "+2.4% today", true],
-  ["DAILY P/L", "+$580.00", "+$128 last hour", true],
-  ["WATCHLIST", "18 assets", "4 alerts active", true],
+  ["PORTFOLIO VALUE", "$24,140.65", "+$580.00 today", true],
+  ["DAILY P/L", "+$580.00", "+2.46% today", true],
+  ["WATCHLIST", "9 symbols", "4 alerts active", true],
   ["MARKET STATUS", "Open", "Berlin • 15:42", true],
 ];
 
