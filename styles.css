@@ -96,16 +96,10 @@ a {
 }
 
 .brand-mark {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--panel-3);
-  color: var(--accent);
-  font-size: 24px;
-  font-weight: 800;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: block;
 }
 
 .brand-name {
