@@ -32,7 +32,7 @@ export function initDoughnutChart(canvasId, data) {
         tooltip: { enabled: false },
         datalabels: {
           color: '#ffffff',
-          font: { size: 11, weight: '700', family: 'system-ui, sans-serif' },
+          font: { size: 11, weight: '700', family: 'Inter, system-ui, sans-serif' },
           formatter: (value) => `${Math.round(value)}%`,
         },
       },
