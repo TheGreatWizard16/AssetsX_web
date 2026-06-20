@@ -54,6 +54,8 @@ body {
   font-size: 1rem;
   line-height: 1.5;
   letter-spacing: 0;
+  /* tabular-nums keeps digit widths equal so prices don't jump when values change */
+  font-variant-numeric: tabular-nums;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -787,9 +789,12 @@ a {
   text-align: right;
 }
 
-.stock-price-block strong {
+.stock-price-block strong,
+.stock-price {
   display: block;
   font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
   line-height: 1;
   margin-bottom: 8px;
 }
@@ -989,6 +994,15 @@ a {
 
 .portfolio-stat-tile strong {
   font-size: 17px;
+}
+
+/* Big portfolio value uses Inter (not mono) — same approach as Robinhood's balance display */
+.portfolio-value {
+  font-size: clamp(28px, 3.5vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 4px 0 6px;
+  line-height: 1.1;
 }
 
 .portfolio-grid {

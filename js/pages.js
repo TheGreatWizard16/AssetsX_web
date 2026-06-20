@@ -193,8 +193,8 @@ function renderStockHero(symbol, details) {
       </div>
     </div>
     <div class="stock-price-block">
-      <strong class="mono">${formatPrice(quote.c)}</strong>
-      <span class="price-change mono ${isUp ? 'up' : 'down'}">${sign}${quote.d.toFixed(2)} (${sign}${quote.dp.toFixed(2)}%)</span>
+      <strong class="stock-price">${formatPrice(quote.c)}</strong>
+      <span class="price-change ${isUp ? 'up' : 'down'}">${sign}${quote.d.toFixed(2)} (${sign}${quote.dp.toFixed(2)}%)</span>
       <div class="stock-actions">
         <button class="btn" data-action="sell">Sell</button>
         <button class="btn primary" data-action="buy">Buy</button>
@@ -338,8 +338,8 @@ function renderPortfolioSummary() {
     <div class="portfolio-summary-left">
       <div class="portfolio-balance">
         <p class="eyebrow">TOTAL PORTFOLIO VALUE</p>
-        <h2 class="mono">${s.totalValue}</h2>
-        <span class="price-change mono ${isTrendUp(s.todayChange) ? 'up' : 'down'}">${s.todayChange} today</span>
+        <h2 class="portfolio-value">${s.totalValue}</h2>
+        <span class="price-change ${isTrendUp(s.todayChange) ? 'up' : 'down'}">${s.todayChange} today</span>
       </div>
       <div class="portfolio-stat-tiles">
         <div class="portfolio-stat-tile">
