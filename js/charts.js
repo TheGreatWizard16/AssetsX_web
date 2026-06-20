@@ -1,4 +1,5 @@
-// Draw a doughnut chart for the asset allocation card
+// Draw a doughnut chart for the asset allocation card.
+// Uses chartjs-plugin-datalabels to show percentage labels on each segment.
 export function initDoughnutChart(canvasId, data) {
   const canvas = document.getElementById(canvasId);
   if (!canvas || typeof Chart === 'undefined') return;
@@ -6,22 +7,35 @@ export function initDoughnutChart(canvasId, data) {
   const existing = Chart.getChart(canvasId);
   if (existing) existing.destroy();
 
+  const plugins = [];
+  if (typeof ChartDataLabels !== 'undefined') plugins.push(ChartDataLabels);
+
   new Chart(canvas, {
     type: 'doughnut',
+    plugins,
     data: {
       labels: data.labels,
       datasets: [{
         data: data.values,
         backgroundColor: data.colors,
-        borderWidth: 0,
+        borderWidth: 2,
+        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#0d1929',
         hoverOffset: 4,
       }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      cutout: '72%',
-      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      cutout: '65%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false },
+        datalabels: {
+          color: '#ffffff',
+          font: { size: 11, weight: '700', family: 'system-ui, sans-serif' },
+          formatter: (value) => `${Math.round(value)}%`,
+        },
+      },
     },
   });
 }

@@ -197,40 +197,17 @@ function generateFallbackCandles(symbol, referencePrice) {
 // The cache key includes the `from` timestamp so different date ranges
 // (1D, 1M, 3M, 1Y) don't overwrite each other in the cache.
 export async function fetchStockCandles(symbol, resolution, from, to, referencePrice) {
-  try {
-    const cacheKey = `assetsx_stock_candles_${symbol}_${resolution}_${from}`;
-    const cachedCandles = readCache(cacheKey);
-    if (cachedCandles && cachedCandles.labels && cachedCandles.prices) {
-      return cachedCandles;
-    }
-
-    const url = `https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}&token=${API_CONFIG.FINNHUB_KEY}`;
-    const response = await fetch(url);
-
-    if (response.status === 429) {
-      showToast("API rate limit reached. Try again in 60 seconds.");
-      return null;
-    }
-
-    const data = await response.json();
-
-    if (data.s === 'ok' && data.t && data.c) {
-      const chartData = {
-        labels: data.t.map(ts => new Date(ts * 1000).toLocaleDateString()),
-        prices: data.c,
-      };
-      writeCache(cacheKey, chartData);
-      return chartData;
-    }
-
-    // No candle data available, so use generated demo data
-    const fallbackChart = generateFallbackCandles(symbol, referencePrice);
-    writeCache(cacheKey, fallbackChart);
-    return fallbackChart;
-  } catch (error) {
-    console.error(`Candle fetch failed for ${symbol}:`, error);
-    return generateFallbackCandles(symbol, referencePrice);
+  const cacheKey = `assetsx_stock_candles_${symbol}_${resolution}_${from}`;
+  const cachedCandles = readCache(cacheKey);
+  if (cachedCandles && cachedCandles.labels && cachedCandles.prices) {
+    return cachedCandles;
   }
+
+  // Candle history endpoint requires a premium Finnhub plan.
+  // Use generated fallback data so the chart always renders without API errors.
+  const fallbackChart = generateFallbackCandles(symbol, referencePrice);
+  writeCache(cacheKey, fallbackChart);
+  return fallbackChart;
 }
 
 

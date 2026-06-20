@@ -68,9 +68,9 @@ export const DEMO_PORTFOLIO_SUMMARY = {
 
 // Demo data for the asset allocation chart on the portfolio page
 export const DEMO_ALLOCATION = [
-  { label: "AAPL", value: "$7,850.25", pct: 32.5, color: "var(--accent)" },
-  { label: "MSFT", value: "$6,840.40", pct: 28.3, color: "var(--green)" },
-  { label: "BTC", value: "$9,450.00", pct: 39.2, color: "#e7bf99" },
+  { label: "AAPL", value: "$7,850.25", pct: 32.5, color: "#4d6080" },
+  { label: "MSFT", value: "$6,840.40", pct: 28.3, color: "#7b94b0" },
+  { label: "BTC",  value: "$9,450.00", pct: 39.2, color: "#b0c4d8" },
 ];
 
 // Demo portfolio value history for the performance chart on the portfolio page
