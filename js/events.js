@@ -148,11 +148,13 @@ function bindNewsCardNavigation() {
 function bindGlobalSearch() {
   [".search", ".market-search"].forEach(selector => {
     const searchInput = document.querySelector(selector);
-    if (!searchInput) return;
+    // Guard against double-binding when bindInteractions() is called a second time after API load
+    if (!searchInput || searchInput.dataset.bound) return;
+    searchInput.dataset.bound = 'true';
 
     searchInput.addEventListener("input", () => {
       const query = searchInput.value.trim().toLowerCase();
-      document.querySelectorAll(".watch-row, .holding-row, .news-card, .market-table tbody tr").forEach((row) => {
+      document.querySelectorAll(".watch-row, .holdings-row, .news-card, .market-table tbody tr").forEach((row) => {
         row.style.display = row.textContent.toLowerCase().includes(query) ? "" : "none";
       });
     });
