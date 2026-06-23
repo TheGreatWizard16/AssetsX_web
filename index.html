@@ -23,7 +23,7 @@
         <!-- Hero text and feature bullets, vertically centered -->
         <div class="auth-copy-body">
           <h1>Trade smarter.<br>Track everything.</h1>
-          <p>Real-time prices, portfolio tracking, and market news — all in one place.</p>
+          <p>Real-time prices, portfolio tracking, and market news, all in one place.</p>
 
           <ul class="auth-features">
             <li class="auth-feature">
@@ -54,17 +54,22 @@
       </section>
 
       <!-- Right side: sign-in form -->
+      <!-- PHP handles form on a PHP server; Firebase JS handles it when deployed -->
       <section class="card auth-card">
         <h2>Welcome back</h2>
         <p>Sign in to continue trading.</p>
-        <form id="loginForm" class="form">
+
+        <!-- Inline error message shows here when login fails -->
+        <div id="form-error" class="form-error" style="display:none;"></div>
+
+        <form id="loginForm" class="form" action="login.php" method="POST">
           <div class="field">
             <label for="email">Email</label>
-            <input id="email" type="text" placeholder="Enter email" required>
+            <input id="email" name="email" type="email" placeholder="Enter email" required>
           </div>
           <div class="field">
             <label for="password">Password</label>
-            <input id="password" type="password" placeholder="Password" required>
+            <input id="password" name="password" type="password" placeholder="Password" required>
           </div>
           <div class="form-row">
             <button class="text-link" type="button" data-action="forgot">Forgot password?</button>

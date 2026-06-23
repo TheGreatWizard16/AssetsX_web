@@ -6,8 +6,7 @@ import { showToast } from './utils.js';
 
 // ── Market data ──────────────────────────────────────────────────────────────
 
-// Get a single stock quote from Finnhub.
-// Falls back to demo numbers if the request fails so the page still renders.
+// Get the current price of one stock from the Finnhub API
 function fetchQuote(symbol) {
   const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_CONFIG.FINNHUB_KEY}`;
 
@@ -20,8 +19,7 @@ function fetchQuote(symbol) {
     .catch(() => ({ symbol, ...FALLBACK_QUOTE }));
 }
 
-// Convert a raw Finnhub quote object into a display row for the market table.
-// Row format: [symbol, name, price, change%, volume, country]
+// Turn a raw API quote into a table row: [symbol, name, price, change%, volume, country]
 function buildMarketRow(quote) {
   const price = typeof quote.c === 'number' ? quote.c : FALLBACK_QUOTE.c;
   const change = typeof quote.d === 'number' ? quote.d : 0;
@@ -37,8 +35,7 @@ function buildMarketRow(quote) {
   ];
 }
 
-// Load live prices for all watchlist stocks and save them to appState.
-// Results are cached for 5 minutes to avoid hitting the API on every page load.
+// Load live prices for all stocks and save them. Results are cached for 5 minutes.
 export async function fetchMarketData() {
   try {
     const cachedRows = readCache('assetsx_market_data');
@@ -60,7 +57,7 @@ export async function fetchMarketData() {
 
 // ── General news ─────────────────────────────────────────────────────────────
 
-// Convert a raw Finnhub news article into the format news cards expect:
+// Turn a raw Finnhub article into the format used by news cards:
 // [category, headline, summary, image, timestamp, url]
 function buildGeneralNewsRow(article) {
   return [
@@ -73,8 +70,7 @@ function buildGeneralNewsRow(article) {
   ];
 }
 
-// Fetch the latest market news and save it to appState.
-// We only keep 12 articles so the news page doesn't get too long.
+// Download the latest market news and save it. We only keep 12 articles.
 export async function fetchGeneralNews() {
   try {
     const cachedNews = readCache('assetsx_market_news');
@@ -92,16 +88,15 @@ export async function fetchGeneralNews() {
       writeCache('assetsx_market_news', appState.newsItems);
     }
   } catch (error) {
-    console.error("News fetch failed:", error);
+    console.warn("News fetch failed:", error);
   }
 }
 
 
 // ── Stock detail page ─────────────────────────────────────────────────────────
 
-// Convert a company-specific news article into the format news cards expect.
-// Finnhub article URLs sometimes redirect to their homepage on the free plan,
-// so we fall back to a Google search link for the headline.
+// Turn a company news article into the format used by news cards.
+// If Finnhub gives us a broken link, we fall back to a Google search for the headline.
 function buildStockNewsRow(article) {
   const articleUrl = article.url && !article.url.includes('finnhub.io')
     ? article.url
@@ -117,8 +112,8 @@ function buildStockNewsRow(article) {
   ];
 }
 
-// Fetch everything needed for the stock detail page in one go:
-// company profile, current quote, key metrics, and recent news.
+// Download the company profile, current price, key stats, and recent news for a stock.
+// Everything is cached so clicking the same stock twice doesn't make duplicate API calls.
 export async function fetchStockDetails(symbol) {
   try {
     const cacheKey = `assetsx_stock_details_${symbol}`;
@@ -130,6 +125,7 @@ export async function fetchStockDetails(symbol) {
     const today = new Date().toISOString().split('T')[0];
     const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
+    // Make all 4 API calls at the same time to save loading time
     const [profile, quote, metrics, news] = await Promise.all([
       fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_CONFIG.FINNHUB_KEY}`).then(r => r.json()),
       fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_CONFIG.FINNHUB_KEY}`).then(r => r.json()),
@@ -137,7 +133,7 @@ export async function fetchStockDetails(symbol) {
       fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${monthAgo}&to=${today}&token=${API_CONFIG.FINNHUB_KEY}`).then(r => r.json()),
     ]);
 
-    // If the API returned incomplete data (e.g. rate limit hit), stop here
+    // If the API returned empty data (usually because we hit the rate limit), stop here
     if (!profile || !profile.name || !quote || !quote.c) {
       showToast(`Could not load details for ${symbol}. API limit?`);
       return null;
@@ -153,7 +149,7 @@ export async function fetchStockDetails(symbol) {
     writeCache(cacheKey, details);
     return details;
   } catch (error) {
-    console.error(`Details fetch failed for ${symbol}:`, error);
+    console.warn(`Could not load stock details for ${symbol}:`, error);
     return null;
   }
 }
@@ -163,16 +159,16 @@ export async function fetchStockDetails(symbol) {
 
 const CHART_DEMO_DAYS = 30;
 
-// Generate a consistent starting price from a stock symbol's letters.
-// This keeps demo charts stable across page refreshes rather than random.
+// Use the stock symbol letters to generate a stable starting price for the demo chart.
+// This way the chart looks the same every time the page is refreshed.
 function seedPriceFromSymbol(symbol) {
   let total = 0;
   for (const char of symbol) total += char.charCodeAt(0);
   return 50 + (total % 300);
 }
 
-// Build a fake price history ending at referencePrice.
-// Used when the Finnhub candle endpoint is unavailable on the free plan.
+// Generate demo price history for the chart.
+// The real history endpoint needs a paid Finnhub plan, so we simulate it instead.
 function generateFallbackCandles(symbol, referencePrice) {
   const endPrice = referencePrice || seedPriceFromSymbol(symbol);
   const labels = new Array(CHART_DEMO_DAYS + 1);
@@ -186,16 +182,15 @@ function generateFallbackCandles(symbol, referencePrice) {
     labels[index] = date.toLocaleDateString();
     prices[index] = Number(price.toFixed(2));
 
-    // Walk backwards with small random movements to simulate a real price history
+    // Add small random price movements to make the chart look realistic
     price -= (Math.random() - 0.5) * (endPrice * 0.02);
   }
 
   return { labels, prices };
 }
 
-// Fetch OHLC candle data for the stock price chart.
-// The cache key includes the `from` timestamp so different date ranges
-// (1D, 1M, 3M, 1Y) don't overwrite each other in the cache.
+// Get the price history data for the stock chart.
+// Each time range (1D, 1M, 3M, 1Y) is cached separately so switching tabs is instant.
 export async function fetchStockCandles(symbol, resolution, from, to, referencePrice) {
   const cacheKey = `assetsx_stock_candles_${symbol}_${resolution}_${from}`;
   const cachedCandles = readCache(cacheKey);
@@ -203,8 +198,7 @@ export async function fetchStockCandles(symbol, resolution, from, to, referenceP
     return cachedCandles;
   }
 
-  // Candle history endpoint requires a premium Finnhub plan.
-  // Use generated fallback data so the chart always renders without API errors.
+  // Use generated data since the history endpoint needs a paid Finnhub plan
   const fallbackChart = generateFallbackCandles(symbol, referencePrice);
   writeCache(cacheKey, fallbackChart);
   return fallbackChart;
@@ -213,7 +207,7 @@ export async function fetchStockCandles(symbol, resolution, from, to, referenceP
 
 // ── User location ─────────────────────────────────────────────────────────────
 
-// Update the location and date text shown in the page header
+// Update the city and date shown in the page header
 function updateHeaderSubtitle() {
   const subtitle = document.getElementById('header-subtitle');
   if (subtitle) {
@@ -221,8 +215,8 @@ function updateHeaderSubtitle() {
   }
 }
 
-// Detect the user's city from their IP address and update the header.
-// Result is cached in sessionStorage so we only call the API once per session.
+// Detect the user's location from their IP address and show it in the header.
+// We cache the result so the API is only called once per browser session.
 export async function initGeolocation() {
   try {
     const cachedLocation = sessionStorage.getItem('assetsx_user_location');
@@ -242,7 +236,7 @@ export async function initGeolocation() {
 
     updateHeaderSubtitle();
   } catch (error) {
-    console.error("Geolocation failed:", error);
+    console.warn("Could not detect location:", error);
     updateHeaderSubtitle();
   }
 }

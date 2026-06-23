@@ -10,12 +10,12 @@ import { initStockChart } from './charts.js';
 // Handle every button that has a data-action attribute
 function bindActionButtons() {
   document.querySelectorAll("[data-action]").forEach((button) => {
-    button.addEventListener("click", () => handleAction(button));
+    button.addEventListener("click", (e) => handleAction(button, e));
   });
 }
 
 // Decide what happens when a data-action button is clicked
-function handleAction(button) {
+function handleAction(button, e) {
   const action = button.dataset.action;
 
   switch (action) {
@@ -34,7 +34,7 @@ function handleAction(button) {
       break;
 
     case "forgot":
-      showToast("Password reset link would be sent by email.");
+      // Handled in main.js by bindForgotPassword() which calls Firebase sendPasswordResetEmail
       break;
 
     case "social-google":
@@ -55,7 +55,11 @@ function handleAction(button) {
       break;
 
     case "logout":
-      signOut(auth);
+      // Stop the link from navigating right away so signOut can finish first
+      if (e) e.preventDefault();
+      signOut(auth).then(() => {
+        location.href = 'signin.html';
+      });
       break;
   }
 }
@@ -120,25 +124,16 @@ function bindRowNavigation() {
   });
 }
 
-// Make news cards navigate to the news reader page.
-// Cards from the stock detail page also pass the stock symbol in the URL
-// so the reader can find the right article in the cache.
+// Open the source article URL in a new tab when a news card is clicked.
+// No internal reader page — go straight to the original story.
 function bindNewsCardNavigation() {
   document.querySelectorAll(".news-card").forEach((card) => {
-    const index = card.dataset.newsIndex;
-    if (index === "null") return;
+    const url = card.dataset.url;
+    if (!url) return;
 
     card.style.cursor = 'pointer';
     card.addEventListener("click", () => {
-      let url = `news.html?id=${index}`;
-
-      if (index.startsWith('stock-')) {
-        const params = new URLSearchParams(location.search);
-        const symbol = params.get('symbol');
-        if (symbol) url += `&symbol=${symbol}`;
-      }
-
-      location.href = url;
+      window.open(url, '_blank', 'noopener,noreferrer');
     });
   });
 }
@@ -196,6 +191,39 @@ function bindMarketRegionFilter() {
   });
 }
 
+// Filter news cards by category when the tabs on the news page are clicked.
+// The category keywords are matched against the tag text on each news card.
+function bindNewsCategoryTabs() {
+  const tabs = document.getElementById('news-category-tabs');
+  if (!tabs) return;
+
+  const CATEGORY_KEYWORDS = {
+    macro: ['economy', 'macro', 'federal', 'rate', 'inflation', 'gdp', 'market'],
+    tech:  ['tech', 'software', 'apple', 'google', 'microsoft', 'nvidia', 'amazon'],
+    crypto: ['crypto', 'bitcoin', 'ethereum', 'blockchain', 'defi', 'nft', 'coin'],
+  };
+
+  tabs.querySelectorAll('.pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      tabs.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+
+      const category = pill.dataset.category;
+      const cards = document.querySelectorAll('#news-grid .news-card');
+
+      cards.forEach(card => {
+        if (category === 'all') {
+          card.style.display = '';
+          return;
+        }
+        const text = card.textContent.toLowerCase();
+        const keywords = CATEGORY_KEYWORDS[category] || [];
+        card.style.display = keywords.some(kw => text.includes(kw)) ? '' : 'none';
+      });
+    });
+  });
+}
+
 // Attach all event listeners. Called after the page's dynamic content has been rendered.
 export function bindInteractions() {
   bindActionButtons();
@@ -205,4 +233,5 @@ export function bindInteractions() {
   bindNewsCardNavigation();
   bindGlobalSearch();
   bindMarketRegionFilter();
+  bindNewsCategoryTabs();
 }

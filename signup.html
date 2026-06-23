@@ -54,21 +54,30 @@
       </section>
 
       <!-- Right side: sign-up form -->
+      <!-- PHP handles this form on a PHP server; Firebase JS handles it when deployed -->
       <section class="card auth-card">
         <h2>Create account</h2>
         <p>Start tracking markets in seconds.</p>
-        <form id="signupForm" class="form">
+
+        <!-- Inline error message shows here when registration fails -->
+        <div id="form-error" class="form-error" style="display:none;"></div>
+
+        <form id="signupForm" class="form" action="register.php" method="POST">
           <div class="field">
             <label for="fullname">Full name</label>
-            <input id="fullname" type="text" placeholder="Enter full name" required>
+            <input id="fullname" name="fullname" type="text" placeholder="Enter full name" required>
           </div>
           <div class="field">
             <label for="email">Email</label>
-            <input id="email" type="text" placeholder="Enter email" required>
+            <input id="email" name="email" type="email" placeholder="Enter email" required>
           </div>
           <div class="field">
             <label for="password">Password</label>
-            <input id="password" type="password" placeholder="Password" required>
+            <input id="password" name="password" type="password" placeholder="Password (min. 6 characters)" required>
+          </div>
+          <div class="field">
+            <label for="confirm_password">Confirm password</label>
+            <input id="confirm_password" name="confirm_password" type="password" placeholder="Repeat password" required>
           </div>
           <button class="btn primary" type="submit">Create Account</button>
         </form>
@@ -85,6 +94,7 @@
         <p class="auth-switch">
           Already have an account? <a href="signin.html">Sign in</a>
         </p>
+
         <p class="legal">By continuing you agree to AssetsX terms and privacy policy.</p>
       </section>
 

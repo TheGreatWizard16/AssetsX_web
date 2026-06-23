@@ -583,10 +583,6 @@ a {
   color: var(--text);
 }
 
-.reader-container {
-  max-width: 800px;
-  margin: 0 auto;
-}
 
 .market-table th {
   color: var(--muted);
@@ -1170,10 +1166,6 @@ a {
   height: 160px;
 }
 
-.reader {
-  align-items: flex-start;
-}
-
 .pro-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 420px;
@@ -1608,6 +1600,66 @@ a {
   line-height: 1.4;
 }
 
+/* Inline form error message — shows below the form title when login or signup fails */
+.form-error {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  border-radius: 8px;
+  background: rgba(248, 113, 113, 0.08);
+  color: var(--red);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Compact horizontal ticker strip on the news list page */
+.news-ticker-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 20px;
+  /* Hide the scrollbar — the strip still scrolls on overflow */
+  scrollbar-width: none;
+}
+
+.news-ticker-strip::-webkit-scrollbar {
+  display: none;
+}
+
+/* Individual stock chip in the ticker strip */
+.ticker-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ticker-chip:hover {
+  border-color: var(--accent);
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.ticker-sym {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+}
+
+.ticker-price {
+  font-size: 13px;
+  color: var(--muted);
+}
+
 /* Toast notification — shows a short message then fades out */
 .toast {
   position: fixed;
@@ -1631,23 +1683,6 @@ a {
 .toast.visible {
   opacity: 1;
   transform: translateY(0);
-}
-
-/* Fallback empty-state page */
-.placeholder-page {
-  max-width: 760px;
-}
-
-.placeholder-page h2 {
-  margin: 0 0 16px;
-  font-size: 44px;
-}
-
-.placeholder-page p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 18px;
-  line-height: 1.6;
 }
 
 /* Tablet breakpoint — collapse sidebar to a top nav bar */

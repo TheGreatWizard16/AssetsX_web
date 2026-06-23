@@ -44,12 +44,17 @@
             <p>Readable updates grouped by category.</p>
           </div>
 
+          <!-- Compact stock ticker — only shown on the news list, hidden on article detail -->
+          <div id="news-ticker-strip" class="news-ticker-strip">
+            <!-- Filled by main.js -->
+          </div>
+
           <!-- Category filter tabs -->
-          <div class="range-tabs news-tabs">
-            <span class="pill active">Trending</span>
-            <span class="pill">Macro</span>
-            <span class="pill">Tech</span>
-            <span class="pill">Crypto</span>
+          <div class="range-tabs news-tabs" id="news-category-tabs">
+            <span class="pill active" data-category="all">Trending</span>
+            <span class="pill" data-category="macro">Macro</span>
+            <span class="pill" data-category="tech">Tech</span>
+            <span class="pill" data-category="crypto">Crypto</span>
           </div>
 
           <!-- News articles — filled by main.js -->
