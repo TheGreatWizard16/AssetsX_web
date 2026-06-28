@@ -1,9 +1,10 @@
 <?php
 // Handle the login form submission.
-// This file satisfies the PHP requirement from the Frontend Programming exam.
-// On a PHP server this runs server-side; on Vercel, Firebase handles auth via JavaScript.
+// This runs server-side when PHP is available. With JavaScript on, main.js
+// handles the form submit instead so the page doesn't reload.
 
 require_once 'session_handler.php';
+require_once 'firebase_helper.php';
 
 // Only process POST requests — reject direct browser access
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -30,13 +31,19 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 }
 
 // --- Authentication ---
-// In a real PHP app, you would check the email and hashed password against a database here.
-// In AssetsX, Firebase handles the actual credential check via JavaScript.
-// PHP manages the server-side session so protected pages can verify the user.
+// Sign in against the same Firebase account the JS track uses (see
+// firebase_helper.php) — this actually checks the password now.
+try {
+    $auth = fb_sign_in($email, $password);
+} catch (Exception $e) {
+    header('Location: signin.html?error=' . urlencode($e->getMessage()));
+    exit;
+}
 
 // Save the login state to the PHP session
 $_SESSION['logged_in']  = true;
 $_SESSION['user_email'] = $email;
+$_SESSION['uid']        = $auth['localId'];
 
 // Redirect to the main dashboard after login
 header('Location: home.html');

@@ -2,26 +2,24 @@
 
 import { initGeolocation, fetchMarketData, fetchGeneralNews } from './api.js';
 import { bindInteractions } from './events.js';
-import { DEMO_METRICS, FALLBACK_MARKET_ROWS } from './config.js';
+import { FALLBACK_MARKET_ROWS } from './config.js';
 import { appState } from './state.js';
-import { auth } from './firebase.js';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-  sendPasswordResetEmail,
-  onAuthStateChanged,
-} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import { showToast } from './utils.js';
 import { getCurrency, setCurrency, CURRENCY_CODES } from './currency.js';
+import { getTheme, setTheme } from './theme.js';
+import { signUp, signIn, sendVerificationEmail, lookupUser, getStoredAuth, getValidIdToken } from './firebaseAuth.js';
+import { getUserDoc, createUserDoc } from './db.js';
+import { loadPortfolio } from './trade.js';
 import {
-  renderMetrics,
   renderHomePage,
+  renderPortfolioMetrics,
   renderMarketsPage,
   renderStockPage,
   renderPortfolioPage,
   renderNewsPage,
   renderAuthPage,
+  renderTradePage,
+  renderProPlanStatus,
 } from './pages.js';
 
 const page = document.body.dataset.page;
@@ -29,22 +27,21 @@ const page = document.body.dataset.page;
 const SECONDS_PER_DAY = 24 * 60 * 60;
 
 // Pages that require the user to be logged in
-const PROTECTED_PAGES = ['home', 'markets', 'portfolio', 'news', 'stock', 'pro'];
+const PROTECTED_PAGES = ['home', 'markets', 'portfolio', 'news', 'stock', 'pro', 'trade'];
 
 // Check if the user is logged in when the page loads.
+// "Logged in" means a Firebase idToken/refreshToken pair is stored — see firebaseAuth.js.
 // If they are not logged in and try to open a protected page, send them to the sign-in page.
 // If they are already logged in and open the sign-in page, send them to the dashboard.
 function checkAuthState() {
-  onAuthStateChanged(auth, (user) => {
-    if (PROTECTED_PAGES.includes(page) && !user) {
-      // User is not logged in — send them to the sign-in page
-      location.href = 'signin.html';
-    }
-    if ((page === 'signin' || page === 'signup') && user) {
-      // User is already logged in — send them to the dashboard
-      location.href = 'home.html';
-    }
-  });
+  const loggedIn = !!getStoredAuth();
+
+  if (PROTECTED_PAGES.includes(page) && !loggedIn) {
+    location.href = 'signin.html';
+  }
+  if ((page === 'signin' || page === 'signup') && loggedIn) {
+    location.href = 'home.html';
+  }
 }
 
 // Show an inline error message below the form heading
@@ -68,34 +65,33 @@ function clearFormError() {
   }
 }
 
-// Send a password reset email when the user clicks "Forgot password?"
+// Show an inline success/info message below the form heading
+// (e.g. "check your email" after sign-up, or "email verified" after clicking the link)
+function showFormNotice(message) {
+  const noticeBox = document.getElementById('form-notice');
+  if (noticeBox) {
+    noticeBox.textContent = message;
+    noticeBox.style.display = 'block';
+  } else {
+    showToast(message);
+  }
+}
+
+// "Forgot password?" is a demo button — there is no real backend to send an email from
 function bindForgotPassword() {
   const forgotButton = document.querySelector('[data-action="forgot"]');
   if (!forgotButton) return;
 
   forgotButton.addEventListener('click', () => {
-    const emailInput = document.getElementById('email');
-    const email = emailInput ? emailInput.value.trim() : '';
-
-    if (!email) {
-      showFormError('Enter your email address first, then click Forgot password.');
-      return;
-    }
-
-    sendPasswordResetEmail(auth, email)
-      .then(() => {
-        showToast(`Password reset email sent to ${email}. Check your inbox.`);
-        clearFormError();
-      })
-      .catch((error) => {
-        showFormError(authErrorMessage(error));
-      });
+    showToast('Password reset is not available in this demo.');
   });
 }
 
 // Handle the sign-in and sign-up forms.
-// JavaScript takes over the submit event and uses Firebase to log the user in.
-// The PHP action on the form (login.php / register.php) runs instead on a PHP server.
+// Real accounts: signUp()/signIn() call Firebase's Identity Toolkit REST API
+// (see firebaseAuth.js) — no SDK, just fetch(), same as the Finnhub calls in
+// api.js. The PHP action on the form (login.php / register.php) calls the
+// same REST endpoints server-side and runs instead when JavaScript is off.
 function bindAuthFormSubmit() {
   if (page !== 'signin' && page !== 'signup') return;
 
@@ -103,31 +99,42 @@ function bindAuthFormSubmit() {
   const urlParams = new URLSearchParams(location.search);
   const phpError = urlParams.get('error');
   if (phpError) showFormError(phpError);
+  if (urlParams.get('verified') === '1') showFormNotice('Email verified — you can sign in now.');
 
   const form = document.querySelector(page === 'signin' ? '#loginForm' : '#signupForm');
   if (!form) return;
 
-  form.addEventListener("submit", (event) => {
-    // Stop the browser from submitting to PHP so Firebase can handle it
+  form.addEventListener("submit", async (event) => {
+    // Stop the browser from submitting to PHP so we can log the user in here instead
     event.preventDefault();
     clearFormError();
 
     const email = form.querySelector('#email').value.trim();
     const password = form.querySelector('#password').value;
-    const submitButton = form.querySelector('button[type="submit"]');
 
-    // Check that fields are not empty before calling Firebase
+    // Check that fields are filled in and look like a real email before logging in
     if (!email || !password) {
       showFormError('Please fill in all fields.');
       return;
     }
 
+    if (!email.includes('@')) {
+      showFormError('Please enter a valid email address.');
+      return;
+    }
+
+    let fullname = '';
     if (page === 'signup') {
-      const fullname = form.querySelector('#fullname')?.value.trim() || '';
+      fullname = form.querySelector('#fullname')?.value.trim() || '';
       const confirmPwd = form.querySelector('#confirm_password')?.value || '';
 
       if (!fullname) {
         showFormError('Please enter your full name.');
+        return;
+      }
+
+      if (password.length < 6) {
+        showFormError('Password should be at least 6 characters.');
         return;
       }
 
@@ -138,56 +145,79 @@ function bindAuthFormSubmit() {
       }
     }
 
-    submitButton.disabled = true;
-    submitButton.textContent = page === 'signin' ? 'Signing in...' : 'Creating account...';
+    // Disable the button while the network calls run so a slow connection
+    // can't be double-submitted
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
 
-    if (page === 'signin') {
-      // Sign in with email and password using Firebase
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          location.href = "home.html";
-        })
-        .catch((error) => {
-          showFormError(authErrorMessage(error));
-          submitButton.disabled = false;
-          submitButton.textContent = 'Sign In';
-        });
-    } else {
-      // Create the account, then send a verification email to confirm their address
-      createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          sendEmailVerification(userCredential.user).then(() => {
-            showToast('Account created! Check your email to verify your account.');
-          });
-          location.href = "home.html";
-        })
-        .catch((error) => {
-          showFormError(authErrorMessage(error));
-          submitButton.disabled = false;
-          submitButton.textContent = 'Create Account';
-        });
+    try {
+      if (page === 'signup') {
+        // New accounts start with an empty watchlist and $0 portfolio — just
+        // like signing up for a real brokerage account
+        const { idToken, uid } = await signUp(email, password);
+        await createUserDoc(uid, { fullname, email, watchlist: [] });
+        await sendVerificationEmail(idToken);
+      } else {
+        await signIn(email, password);
+      }
+      location.href = "home.html";
+    } catch (error) {
+      showFormError(error.message);
+      if (submitButton) submitButton.disabled = false;
     }
   });
 }
 
-// Turn Firebase error codes into simple messages the user can understand
-function authErrorMessage(error) {
-  switch (error.code) {
-    case 'auth/invalid-email':
-      return 'Please enter a valid email address.';
-    case 'auth/user-not-found':
-    case 'auth/wrong-password':
-    case 'auth/invalid-credential':
-      return 'Incorrect email or password.';
-    case 'auth/email-already-in-use':
-      return 'An account with this email already exists.';
-    case 'auth/weak-password':
-      return 'Password should be at least 6 characters.';
-    case 'auth/too-many-requests':
-      return 'Too many failed attempts. Please try again later.';
-    default:
-      return 'Something went wrong. Please try again.';
+// Fetch the signed-in user's Firestore profile (name, watchlist, plan) and
+// their latest verification status, and save them to appState.
+// Safe to call on every page — it's a no-op when nobody is signed in.
+async function loadUserProfile() {
+  const auth = getStoredAuth();
+  if (!auth) return;
+
+  appState.uid = auth.uid;
+  const idToken = await getValidIdToken();
+  if (!idToken) return;
+
+  try {
+    const [doc, account] = await Promise.all([getUserDoc(auth.uid), lookupUser(idToken)]);
+    if (doc) {
+      appState.userName = doc.fullname || '';
+      appState.userWatchlist = doc.watchlist || [];
+      appState.userPlan = doc.plan || 'free';
+    }
+    appState.emailVerified = !!account?.emailVerified;
+  } catch (error) {
+    console.warn('Could not load user profile:', error);
   }
+}
+
+// Show a persistent banner on protected pages until the user verifies their
+// email. Resending calls the same Identity Toolkit endpoint used at sign-up.
+function injectVerifyBanner() {
+  document.getElementById('verify-banner')?.remove();
+  if (!PROTECTED_PAGES.includes(page) || !appState.uid || appState.emailVerified) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'verify-banner';
+  banner.className = 'verify-banner';
+  banner.innerHTML = `
+    <span>Please verify your email — we sent a link to your inbox.</span>
+    <button type="button" class="text-link">Resend email</button>
+  `;
+
+  banner.querySelector('button').addEventListener('click', async () => {
+    try {
+      const idToken = await getValidIdToken();
+      await sendVerificationEmail(idToken);
+      showToast('Verification email sent.');
+    } catch (error) {
+      showToast(error.message);
+    }
+  });
+
+  const main = document.querySelector('.main') || document.querySelector('.content');
+  main?.prepend(banner);
 }
 
 // Run the correct setup function depending on which page is open
@@ -212,18 +242,23 @@ function renderCurrentPage(now, monthAgo) {
     case 'signup':
       renderAuthPage();
       break;
+    case 'trade':
+      renderTradePage();
+      break;
+    case 'pro':
+      renderProPlanStatus();
+      break;
   }
 }
 
-// Show a time-appropriate greeting using the logged-in user's name
+// Show a time-appropriate greeting using the signed-in user's name
 function updateGreeting() {
   const el = document.getElementById('greeting-text');
   if (!el) return;
 
   const hour = new Date().getHours();
   const time = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
-  const user = auth.currentUser;
-  const name = user?.displayName || user?.email?.split('@')[0] || '';
+  const name = appState.userName || '';
   el.textContent = `Good ${time}${name ? `, ${name}` : ''}`;
 }
 
@@ -247,29 +282,82 @@ function injectCurrencySelector() {
   actions.prepend(select);
 }
 
+// Add a button that switches between light and dark mode.
+// Most pages have a top bar to put it in; the auth pages don't, so it
+// goes next to the logo there instead.
+function injectThemeToggle() {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'theme-toggle';
+  button.setAttribute('aria-label', 'Switch between light and dark mode');
+  button.textContent = getTheme() === 'light' ? '☾' : '☀';
+
+  button.addEventListener('click', () => {
+    const next = getTheme() === 'light' ? 'dark' : 'light';
+    setTheme(next);
+    button.textContent = next === 'light' ? '☾' : '☀';
+    // Charts read their colors once when drawn, so reload to redraw them correctly
+    location.reload();
+  });
+
+  const actions = document.querySelector('.top-actions');
+  if (actions) {
+    actions.prepend(button);
+    return;
+  }
+
+  const brand = document.querySelector('.brand');
+  if (brand) brand.appendChild(button);
+}
+
 // Give each API call a time limit so the page doesn't get stuck waiting forever
 function withTimeout(promise, ms) {
   return Promise.race([promise, new Promise(resolve => setTimeout(resolve, ms))]);
 }
 
+// Keep portfolio-derived UI in sync without needing a page refresh —
+// trade.js dispatches this after every buy/sell.
+function bindPortfolioSync() {
+  window.addEventListener('portfolio:updated', () => {
+    if (page === 'home') renderPortfolioMetrics();
+    if (page === 'portfolio') renderPortfolioPage();
+  });
+}
+
 // Start the app — this runs as soon as the page loads
-function initApp() {
+async function initApp() {
   checkAuthState();
   bindAuthFormSubmit();
   bindForgotPassword();
   injectCurrencySelector();
-  updateGreeting();
+  injectThemeToggle();
 
   const now = Math.floor(Date.now() / 1000);
   const monthAgo = now - 30 * SECONDS_PER_DAY;
 
-  // Show placeholder data right away so the page isn't blank while the API loads
+  // Show placeholder market data right away, but wait for the signed-in
+  // user's own profile and portfolio first — trade.html only ever renders
+  // once (see its container.dataset.loaded guard), so it needs real
+  // portfolio data on that first render, not a later one.
   appState.marketRows = FALLBACK_MARKET_ROWS;
-  renderMetrics(DEMO_METRICS);
+
+  // The uid is already known locally (no network needed), so profile and
+  // portfolio can both be fetched from Firestore at the same time instead
+  // of one after the other — cuts this wait roughly in half.
+  const auth = getStoredAuth();
+  if (auth) appState.uid = auth.uid;
+  await Promise.all([
+    withTimeout(loadUserProfile(), 5000),
+    withTimeout(loadPortfolio(), 5000),
+  ]);
+
+  updateGreeting();
   renderCurrentPage(now, monthAgo);
   bindInteractions();
+  bindPortfolioSync();
+  injectVerifyBanner();
 
-  // Fetch real data from the API, then update the page
+  // Fetch market/news/location data in the background, then update the page
   Promise.all([
     withTimeout(initGeolocation(), 6000),
     withTimeout(fetchMarketData(), 8000),

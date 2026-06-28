@@ -1,13 +1,27 @@
-// Central config file — API keys, app settings, and all demo/fallback data live here.
+// Central config file — API keys, app settings, and fallback data live here.
 
 export const API_CONFIG = {
   FINNHUB_KEY: 'd8c81tpr01qidic6oja0d8c81tpr01qidic6ojag',
   CACHE_DURATION: 1000 * 60 * 5, // 5 minutes
 };
 
+// Firebase project used as a REST-only database + auth backend (see README —
+// no Firebase SDK is loaded anywhere, this is called with plain fetch()
+// exactly like the Finnhub/ipapi.co calls in api.js).
+// Fill these in from Firebase console > Project settings > General > Your apps.
+export const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyDB9ExInwFunkt3NM0NOFnvukk1BPBDVWo',
+  projectId: 'assetsx-b5b19',
+};
+
 // Stocks tracked in the watchlist and market table.
 // Mixed countries so the "search by country" feature has something to filter.
 export const WATCHLIST_SYMBOLS = ["AAPL", "MSFT", "TSLA", "NVDA", "AMZN", "SAP", "TM", "SHEL", "BABA"];
+
+// Free-plan accounts are capped at 5 watchlist symbols (matches the limit
+// already advertised on the Pro comparison table); Pro accounts are unlimited.
+// New accounts start with an empty watchlist, not pre-filled with these.
+export const FREE_WATCHLIST_LIMIT = 5;
 
 export const SYMBOL_NAMES = {
   AAPL: "Apple Inc.",
@@ -50,40 +64,12 @@ export const FALLBACK_MARKET_ROWS = [
 
 export const FALLBACK_QUOTE = { c: 150.0, d: 1.25, dp: 0.85 };
 
-// Placeholder data shown on the dashboard cards while real market data loads
-export const DEMO_METRICS = [
-  ["PORTFOLIO VALUE", "$24,140.65", "+$580.00 today", true],
-  ["DAILY P/L", "+$580.00", "+2.46% today", true],
-  ["WATCHLIST", "9 symbols", "4 alerts active", true],
-  ["MARKET STATUS", "Open", "Berlin • 15:42", true],
-];
-
-// Demo data for the portfolio summary card
-export const DEMO_PORTFOLIO_SUMMARY = {
-  totalValue: "$24,140.65",
-  todayChange: "+$580.00 (+2.46%)",
-  totalGain: "+$1,840.65 (+8.27%)",
-  invested: "$22,300.00",
-};
-
-// Demo data for the asset allocation chart on the portfolio page
-export const DEMO_ALLOCATION = [
-  { label: "AAPL", value: "$7,850.25", pct: 32.5, color: "#4d6080" },
-  { label: "MSFT", value: "$6,840.40", pct: 28.3, color: "#7b94b0" },
-  { label: "BTC",  value: "$9,450.00", pct: 39.2, color: "#b0c4d8" },
-];
-
-// Demo portfolio value history for the performance chart on the portfolio page
+// Small illustrative trend line shown behind a user's portfolio value once
+// they own at least one stock. Not real price history — there's no daily
+// snapshot tracking — just a decorative curve, same idea as a loading skeleton.
 export const DEMO_PORTFOLIO_CHART = {
   labels: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
   prices: [22300, 22450, 22380, 22600, 22750, 22680, 22900, 23100, 23050, 23200,
            23350, 23280, 23500, 23600, 23450, 23700, 23850, 23780, 24000, 23900,
            24100, 24050, 24200, 24300, 24180, 24350, 24280, 24400, 24250, 24140],
 };
-
-// Demo holdings for the portfolio table
-export const DEMO_HOLDINGS = [
-  { symbol: "AAPL", name: "Apple Inc.", shares: "45 shares", avgCost: "$162.10", price: "$174.45", value: "$7,850.25", totalGain: "+7.6%" },
-  { symbol: "MSFT", name: "Microsoft Corp.", shares: "20 shares", avgCost: "$310.50", price: "$342.02", value: "$6,840.40", totalGain: "+10.2%" },
-  { symbol: "BTC", name: "Bitcoin", shares: "0.15 coins", avgCost: "$58,200.00", price: "$63,000.00", value: "$9,450.00", totalGain: "+8.3%" },
-];

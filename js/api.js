@@ -59,12 +59,14 @@ export async function fetchMarketData() {
 
 // Turn a raw Finnhub article into the format used by news cards:
 // [category, headline, summary, image, timestamp, url]
+// If Finnhub didn't give us an image, leave it blank — renderNewsCard()
+// just skips the image instead of showing a broken placeholder.
 function buildGeneralNewsRow(article) {
   return [
     article.category.toUpperCase(),
     article.headline.replace(/&amp;/g, '&'),
     article.summary,
-    article.image || 'https://images.unsplash.com/photo-1611974714851-48206138d731?auto=format&fit=crop&q=80&w=400',
+    article.image || '',
     article.datetime,
     article.url,
   ];
@@ -106,7 +108,7 @@ function buildStockNewsRow(article) {
     article.source,
     article.headline,
     article.summary,
-    article.image || 'https://via.placeholder.com/400x200/131315/e4e2e4?text=News',
+    article.image || '',
     article.datetime,
     articleUrl,
   ];
@@ -157,8 +159,6 @@ export async function fetchStockDetails(symbol) {
 
 // ── Price history charts ──────────────────────────────────────────────────────
 
-const CHART_DEMO_DAYS = 30;
-
 // Use the stock symbol letters to generate a stable starting price for the demo chart.
 // This way the chart looks the same every time the page is refreshed.
 function seedPriceFromSymbol(symbol) {
@@ -167,30 +167,112 @@ function seedPriceFromSymbol(symbol) {
   return 50 + (total % 300);
 }
 
-// Generate demo price history for the chart.
-// The real history endpoint needs a paid Finnhub plan, so we simulate it instead.
-function generateFallbackCandles(symbol, referencePrice) {
+// Deterministic PRNG (mulberry32) so a given symbol always produces the same
+// believable-looking demo chart instead of jumping around on every reload,
+// while still looking different from one company to the next.
+function createSeededRandom(seed) {
+  let state = seed >>> 0;
+  return function random() {
+    state |= 0; state = (state + 0x6D2B79F5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function hashString(str) {
+  let hash = 0;
+  for (const char of str) hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  return hash >>> 0;
+}
+
+// Standard timeframe presets used by every range-tab UI in the app.
+// Centralized here so the stock detail page and the Buy/Sell page can't drift apart.
+export const RANGE_PRESETS = ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'ALL'];
+
+const SECONDS_PER_DAY = 86400;
+
+// Turn a range key (e.g. "6M") into the from/resolution pair fetchStockCandles needs.
+export function getRangeWindow(rangeKey, now = Math.floor(Date.now() / 1000)) {
+  switch (rangeKey) {
+    case '1D':  return { from: now - 1    * SECONDS_PER_DAY, resolution: 'D' };
+    case '1W':  return { from: now - 7    * SECONDS_PER_DAY, resolution: 'D' };
+    case '3M':  return { from: now - 90   * SECONDS_PER_DAY, resolution: 'D' };
+    case '6M':  return { from: now - 182  * SECONDS_PER_DAY, resolution: 'W' };
+    case '1Y':  return { from: now - 365  * SECONDS_PER_DAY, resolution: 'W' };
+    case '5Y':  return { from: now - 1825 * SECONDS_PER_DAY, resolution: 'M' };
+    case 'ALL': return { from: now - 3650 * SECONDS_PER_DAY, resolution: 'M' };
+    default:    return { from: now - 30   * SECONDS_PER_DAY, resolution: 'D' }; // 1M
+  }
+}
+
+// Decide how many candles to generate and how volatile they should be,
+// scaled to how much time the chart is covering — short ranges get tight
+// intraday-style ticks, long ranges get a smoother, longer-run shape.
+function pickSeriesShape(from, to) {
+  const spanDays = Math.max((to - from) / SECONDS_PER_DAY, 1);
+
+  if (spanDays <= 1.5)   return { points: 48,  volatility: 0.0022 };
+  if (spanDays <= 9)     return { points: 56,  volatility: 0.006 };
+  if (spanDays <= 35)    return { points: 30,  volatility: 0.012 };
+  if (spanDays <= 100)   return { points: 60,  volatility: 0.016 };
+  if (spanDays <= 200)   return { points: 78,  volatility: 0.02 };
+  if (spanDays <= 420)   return { points: 90,  volatility: 0.024 };
+  if (spanDays <= 2000)  return { points: 110, volatility: 0.03 };
+  return                        { points: 130, volatility: 0.036 };
+}
+
+// Generate believable price history for the demo chart (the real history
+// endpoint needs a paid Finnhub plan, so we simulate it). Walks BACKWARD from
+// today's real price so the chart always lines up with the price shown
+// elsewhere on the page, blending a slow-moving trend with momentum and the
+// occasional larger move so it reads as organic movement instead of static.
+function generateFallbackCandles(symbol, referencePrice, from, to) {
   const endPrice = referencePrice || seedPriceFromSymbol(symbol);
-  const labels = new Array(CHART_DEMO_DAYS + 1);
-  const prices = new Array(CHART_DEMO_DAYS + 1);
+  const { points, volatility } = pickSeriesShape(from, to);
+  const stepSeconds = (to - from) / Math.max(points - 1, 1);
+
+  // Re-seed every few days so long-lived demo data doesn't look frozen
+  // forever, while staying stable for the length of a normal session.
+  const seedBucket = Math.floor(to / (SECONDS_PER_DAY * 3));
+  const random = createSeededRandom(hashString(`${symbol}-${seedBucket}`));
+
+  const prices = new Array(points);
+  let drift = (random() - 0.5) * volatility;   // slow-moving trend bias
+  let momentum = 0;                             // short-term carry-over
 
   let price = endPrice;
-  for (let daysAgo = 0; daysAgo <= CHART_DEMO_DAYS; daysAgo++) {
-    const index = CHART_DEMO_DAYS - daysAgo;
-    const date = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+  prices[points - 1] = Number(endPrice.toFixed(2));
 
-    labels[index] = date.toLocaleDateString();
-    prices[index] = Number(price.toFixed(2));
+  for (let i = points - 2; i >= 0; i--) {
+    // Let the bias wander slowly so the chart has multiple up/down legs
+    // instead of one straight diagonal line.
+    drift += (random() - 0.5) * volatility * 0.3;
+    drift = Math.max(-volatility * 1.5, Math.min(volatility * 1.5, drift));
 
-    // Add small random price movements to make the chart look realistic
-    price -= (Math.random() - 0.5) * (endPrice * 0.02);
+    momentum = momentum * 0.7 + (random() - 0.5) * volatility;
+
+    // Occasional larger move so the chart has believable peaks and pullbacks
+    const shock = random() < 0.08 ? (random() - 0.5) * volatility * 3 : 0;
+
+    const change = drift + momentum + shock;
+    price = price / (1 + change);
+    price = Math.max(price, endPrice * 0.15); // never let the walk go degenerate
+
+    prices[i] = Number(price.toFixed(2));
+  }
+
+  const labels = new Array(points);
+  for (let i = 0; i < points; i++) {
+    const timestamp = to - (points - 1 - i) * stepSeconds;
+    labels[i] = new Date(timestamp * 1000).toISOString();
   }
 
   return { labels, prices };
 }
 
 // Get the price history data for the stock chart.
-// Each time range (1D, 1M, 3M, 1Y) is cached separately so switching tabs is instant.
+// Each time range is cached separately so switching tabs is instant.
 export async function fetchStockCandles(symbol, resolution, from, to, referencePrice) {
   const cacheKey = `assetsx_stock_candles_${symbol}_${resolution}_${from}`;
   const cachedCandles = readCache(cacheKey);
@@ -199,7 +281,7 @@ export async function fetchStockCandles(symbol, resolution, from, to, referenceP
   }
 
   // Use generated data since the history endpoint needs a paid Finnhub plan
-  const fallbackChart = generateFallbackCandles(symbol, referencePrice);
+  const fallbackChart = generateFallbackCandles(symbol, referencePrice, from, to);
   writeCache(cacheKey, fallbackChart);
   return fallbackChart;
 }

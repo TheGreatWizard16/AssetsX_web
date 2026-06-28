@@ -1,7 +1,7 @@
 import { API_CONFIG } from './config.js';
 
 // Read a cached value from sessionStorage.
-// Returns null if the data doesn't exist or has been there longer than 5 minutes.
+// Returns null if the data doesn't exist, is too old, or is corrupted somehow.
 export function readCache(key) {
   const rawData = sessionStorage.getItem(key);
   const timestamp = sessionStorage.getItem(`${key}_timestamp`);
@@ -11,7 +11,11 @@ export function readCache(key) {
   const age = Date.now() - Number(timestamp);
   if (age > API_CONFIG.CACHE_DURATION) return null;
 
-  return JSON.parse(rawData);
+  try {
+    return JSON.parse(rawData);
+  } catch {
+    return null;
+  }
 }
 
 // Save a value to sessionStorage along with the current timestamp.

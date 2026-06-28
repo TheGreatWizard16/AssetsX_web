@@ -2,39 +2,65 @@
 // bindInteractions() is called after the page renders so listeners attach to real elements.
 
 import { showToast } from './utils.js';
-import { auth } from './firebase.js';
-import { signOut } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
-import { fetchStockCandles } from './api.js';
-import { initStockChart } from './charts.js';
+import { fetchStockCandles, getRangeWindow } from './api.js';
+import { initStockChart, showChartSkeleton } from './charts.js';
+import { appState } from './state.js';
+import { renderWatchlist, renderProPlanStatus } from './pages.js';
+import { clearAuth } from './firebaseAuth.js';
+import { addToWatchlist, removeFromWatchlist, createOrder, updateUserPlan } from './db.js';
+import { FREE_WATCHLIST_LIMIT } from './config.js';
 
-// Handle every button that has a data-action attribute
+// Listen for clicks anywhere on the page and handle any [data-action] button.
+// Using event delegation means we don't need to re-bind when new buttons are
+// added to the DOM later (e.g. the Buy/Sell buttons rendered after the API loads).
 function bindActionButtons() {
-  document.querySelectorAll("[data-action]").forEach((button) => {
-    button.addEventListener("click", (e) => handleAction(button, e));
+  if (document._actionsBound) return;
+  document._actionsBound = true;
+
+  document.addEventListener('click', (e) => {
+    const button = e.target.closest('[data-action]');
+    if (button) handleAction(button);
   });
 }
 
 // Decide what happens when a data-action button is clicked
-function handleAction(button, e) {
+function handleAction(button) {
   const action = button.dataset.action;
 
   switch (action) {
     case "trade": {
-      const symbol = button.dataset.symbol || 'AAPL';
-      location.href = `stock.html?symbol=${symbol}`;
+      const rowSymbol = button.dataset.symbol;
+      if (rowSymbol) {
+        // Clicked Trade on a market table row — go to that stock's detail page first
+        location.href = `stock.html?symbol=${rowSymbol}`;
+      } else {
+        // Already on a stock page — go straight to the buy order form
+        const sym = appState.currentStockSymbol || new URLSearchParams(location.search).get('symbol');
+        location.href = sym ? `trade.html?symbol=${sym}&action=buy` : 'markets.html';
+      }
       break;
     }
 
-    case "buy":
-      showToast("Demo buy order prepared.");
+    case "buy": {
+      // Navigate to the buy order page for the current stock
+      const sym = appState.currentStockSymbol || new URLSearchParams(location.search).get('symbol');
+      location.href = sym ? `trade.html?symbol=${sym}&action=buy` : 'markets.html';
       break;
+    }
 
-    case "sell":
-      showToast("Demo sell order prepared.");
+    case "sell": {
+      // Navigate to the sell order page — symbol comes from the row button or current page
+      const sym = button.dataset.symbol || appState.currentStockSymbol || new URLSearchParams(location.search).get('symbol');
+      if (sym) {
+        location.href = `trade.html?symbol=${sym}&action=sell`;
+      } else {
+        showToast('Select a holding to sell.');
+      }
       break;
+    }
 
     case "forgot":
-      // Handled in main.js by bindForgotPassword() which calls Firebase sendPasswordResetEmail
+      // Handled in main.js by bindForgotPassword()
       break;
 
     case "social-google":
@@ -47,20 +73,83 @@ function handleAction(button, e) {
 
     case "pro-trial":
     case "upgrade":
-      showToast("AssetsX Pro trial selected.");
+      startProCheckout();
       break;
 
     case "compare":
       showToast("Free and Pro plan comparison highlighted.");
       break;
 
-    case "logout":
-      // Stop the link from navigating right away so signOut can finish first
-      if (e) e.preventDefault();
-      signOut(auth).then(() => {
-        location.href = 'signin.html';
-      });
+    case "watchlist-toggle": {
+      const symbol = button.dataset.symbol;
+      toggleWatchlistSymbol(symbol);
       break;
+    }
+
+    case "logout":
+      // Clear the stored Firebase tokens, then let the link's normal href take the user to signin.html
+      clearAuth();
+      break;
+  }
+}
+
+// Add or remove a symbol from the signed-in user's Firestore watchlist.
+// Free-plan accounts are capped at FREE_WATCHLIST_LIMIT symbols.
+async function toggleWatchlistSymbol(symbol) {
+  if (!symbol) return;
+  if (!appState.uid) { showToast('Sign in to use your watchlist.'); return; }
+
+  const inWatchlist = appState.userWatchlist.includes(symbol);
+
+  if (!inWatchlist && appState.userPlan !== 'pro' && appState.userWatchlist.length >= FREE_WATCHLIST_LIMIT) {
+    showToast(`Free plan is limited to ${FREE_WATCHLIST_LIMIT} watchlist symbols — upgrade to Pro for unlimited.`);
+    return;
+  }
+
+  try {
+    if (inWatchlist) {
+      await removeFromWatchlist(appState.uid, symbol);
+      appState.userWatchlist = appState.userWatchlist.filter((s) => s !== symbol);
+    } else {
+      await addToWatchlist(appState.uid, symbol);
+      appState.userWatchlist = [...appState.userWatchlist, symbol];
+    }
+
+    // Flip every star for this symbol on the page (markets table + stock hero
+    // can both show the same symbol) and re-render the home widget if present
+    const nowIn = appState.userWatchlist.includes(symbol);
+    document.querySelectorAll(`[data-action="watchlist-toggle"][data-symbol="${symbol}"]`).forEach((btn) => {
+      btn.classList.toggle('active', nowIn);
+      btn.textContent = nowIn ? '★' : '☆';
+    });
+    if (document.getElementById('watchlist-container')) renderWatchlist();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+// Simulated Pro plan checkout — no real payment processor, just a Firestore
+// order record with a generated session id and a plan flip on the user doc.
+async function startProCheckout() {
+  if (!appState.uid) { showToast('Please sign in first.'); return; }
+  if (appState.userPlan === 'pro') { showToast("You're already on the Pro plan."); return; }
+  if (!appState.emailVerified) { showToast('Please verify your email before upgrading.'); return; }
+
+  try {
+    const sessionId = crypto.randomUUID();
+    await createOrder(appState.uid, {
+      sessionId,
+      plan: 'pro',
+      billingCycle: 'monthly',
+      price: 9.99,
+      status: 'confirmed',
+    });
+    await updateUserPlan(appState.uid, 'pro');
+    appState.userPlan = 'pro';
+    renderProPlanStatus(sessionId);
+    showToast('Upgrade confirmed — welcome to AssetsX Pro.');
+  } catch (error) {
+    showToast(error.message);
   }
 }
 
@@ -77,8 +166,8 @@ function bindRangeTabs() {
   });
 }
 
-// Wire the 1D / 1M / 3M / 1Y range tabs on the stock detail page.
-// Each click calculates the correct date range and redraws the chart.
+// Wire the timeframe tabs (1D / 1W / 1M / 3M / 6M / 1Y / 5Y / ALL) on the
+// stock detail page. Each click calculates the correct date range and redraws the chart.
 function bindStockRangeTabs() {
   const container = document.getElementById('stockRangeTabs');
   if (!container) return;
@@ -91,34 +180,26 @@ function bindStockRangeTabs() {
       pill.classList.add('active');
 
       const now = Math.floor(Date.now() / 1000);
-      const SECONDS = { D: 86400, W: 604800 };
-      let from, resolution;
+      const { from, resolution } = getRangeWindow(pill.dataset.range, now);
 
-      switch (pill.dataset.range) {
-        case '1D':
-          from = now - 7  * SECONDS.D;  resolution = 'D'; break;
-        case '3M':
-          from = now - 90 * SECONDS.D;  resolution = 'D'; break;
-        case '1Y':
-          from = now - 365 * SECONDS.D; resolution = 'W'; break;
-        default: // 1M
-          from = now - 30 * SECONDS.D;  resolution = 'D';
-      }
-
+      showChartSkeleton('stockChart');
       const data = await fetchStockCandles(symbol, resolution, from, now);
       initStockChart('stockChart', data);
     });
   });
 }
 
-// Make watchlist rows and market table rows clickable, navigating to the stock detail page
+// Make watchlist rows and market table rows clickable, navigating to the stock detail page.
+// Clicks on a button inside the row (Trade, the watchlist star, etc.) are left
+// alone so they don't also trigger this row-level navigation.
 function bindRowNavigation() {
   document.querySelectorAll(".watch-row, .market-table tbody tr").forEach((row) => {
     const symbol = row.dataset.symbol;
     if (!symbol) return;
 
     row.style.cursor = 'pointer';
-    row.addEventListener("click", () => {
+    row.addEventListener("click", (e) => {
+      if (e.target.closest('[data-action]')) return;
       location.href = `stock.html?symbol=${symbol}`;
     });
   });
@@ -165,7 +246,8 @@ function bindGlobalSearch() {
 }
 
 // Wire the region filter pills on the Markets page so they filter the table by country.
-// Country name is read from the third column (index 2) of each table row.
+// Country name is read from the fourth column (index 3) of each table row —
+// the watchlist star is column 0, so Symbol/Company/Country sit at 1/2/3.
 function bindMarketRegionFilter() {
   const tabs = document.getElementById('market-region-tabs');
   if (!tabs) return;
@@ -184,7 +266,7 @@ function bindMarketRegionFilter() {
           row.style.display = '';
           return;
         }
-        const country = (row.cells[2]?.textContent || '').toLowerCase();
+        const country = (row.cells[3]?.textContent || '').toLowerCase();
         row.style.display = REGIONS[region].some(c => country.includes(c)) ? '' : 'none';
       });
     });

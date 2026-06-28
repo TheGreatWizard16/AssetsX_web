@@ -1,7 +1,7 @@
 <?php
 // Destroy the user's session and redirect them to the sign-in page.
 // This is the server-side logout used when PHP sessions are active.
-// Firebase sign-out is handled separately by the JavaScript in events.js.
+// With JavaScript on, the logout link is handled in events.js instead.
 
 require_once 'session_handler.php';
 
