@@ -5,6 +5,12 @@ export const API_CONFIG = {
   CACHE_DURATION: 1000 * 60 * 5, // 5 minutes
 };
 
+// Cache keys for the signed-in user's own data (see cache.js) — every page
+// is a full reload, so without this every page would re-fetch what the
+// last page just loaded.
+export const PROFILE_CACHE_KEY = 'assetsx_profile_cache';
+export const PORTFOLIO_CACHE_KEY = 'assetsx_portfolio_cache';
+
 // Firebase project used as a REST-only database + auth backend (see README —
 // no Firebase SDK is loaded anywhere, this is called with plain fetch()
 // exactly like the Finnhub/ipapi.co calls in api.js).

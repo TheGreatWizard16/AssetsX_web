@@ -5,26 +5,36 @@
 
 import { appState } from './state.js';
 import { getHoldings, upsertHolding, deleteHolding } from './db.js';
+import { readCache, writeCache } from './cache.js';
+import { PORTFOLIO_CACHE_KEY } from './config.js';
 
-// Read the cached portfolio. loadPortfolio() (called once on page load by
-// main.js) is what actually populates this from Firestore; every buy/sell
-// below updates the cache directly so the rest of the app reads it instantly.
+// Read the portfolio from memory. Buy/sell update this directly so every
+// page reads it instantly, no waiting needed.
 export function getPortfolio() {
   return appState.portfolio;
 }
 
-// Update the cached portfolio and let the rest of the app know.
+// Save the portfolio in memory and in sessionStorage, so the next page
+// doesn't have to fetch it from Firestore again.
 function setPortfolio(portfolio) {
   appState.portfolio = portfolio;
+  writeCache(PORTFOLIO_CACHE_KEY, portfolio);
   window.dispatchEvent(new Event('portfolio:updated'));
 }
 
-// Fetch the signed-in user's real holdings from Firestore. Safe to call when
-// nobody is signed in — it's just a no-op (an empty portfolio).
+// Load the holdings — from sessionStorage if we already have them, otherwise Firestore.
 export async function loadPortfolio() {
   if (!appState.uid) return;
+
+  const cached = readCache(PORTFOLIO_CACHE_KEY);
+  if (cached) {
+    appState.portfolio = cached;
+    return;
+  }
+
   try {
     appState.portfolio = await getHoldings(appState.uid);
+    writeCache(PORTFOLIO_CACHE_KEY, appState.portfolio);
   } catch (error) {
     console.warn('Could not load portfolio:', error);
   }

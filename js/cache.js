@@ -24,3 +24,10 @@ export function writeCache(key, value) {
   sessionStorage.setItem(key, JSON.stringify(value));
   sessionStorage.setItem(`${key}_timestamp`, Date.now().toString());
 }
+
+// Remove a cached value — used on logout so the next sign-in never
+// accidentally reuses a different account's cached data.
+export function clearCache(key) {
+  sessionStorage.removeItem(key);
+  sessionStorage.removeItem(`${key}_timestamp`);
+}

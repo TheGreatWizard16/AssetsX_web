@@ -2,9 +2,10 @@
 
 import { initGeolocation, fetchMarketData, fetchGeneralNews } from './api.js';
 import { bindInteractions } from './events.js';
-import { FALLBACK_MARKET_ROWS } from './config.js';
+import { FALLBACK_MARKET_ROWS, PROFILE_CACHE_KEY } from './config.js';
 import { appState } from './state.js';
 import { showToast } from './utils.js';
+import { readCache, writeCache } from './cache.js';
 import { getCurrency, setCurrency, CURRENCY_CODES } from './currency.js';
 import { getTheme, setTheme } from './theme.js';
 import { signUp, signIn, sendVerificationEmail, lookupUser, getStoredAuth, getValidIdToken } from './firebaseAuth.js';
@@ -168,14 +169,24 @@ function bindAuthFormSubmit() {
   });
 }
 
-// Fetch the signed-in user's Firestore profile (name, watchlist, plan) and
-// their latest verification status, and save them to appState.
+// Load the user's profile (name, watchlist, plan, verified status) — from
+// sessionStorage if we already have it, otherwise Firestore/Identity Toolkit.
 // Safe to call on every page — it's a no-op when nobody is signed in.
 async function loadUserProfile() {
   const auth = getStoredAuth();
   if (!auth) return;
 
   appState.uid = auth.uid;
+
+  const cached = readCache(PROFILE_CACHE_KEY);
+  if (cached) {
+    appState.userName = cached.userName;
+    appState.userWatchlist = cached.userWatchlist;
+    appState.userPlan = cached.userPlan;
+    appState.emailVerified = cached.emailVerified;
+    return;
+  }
+
   const idToken = await getValidIdToken();
   if (!idToken) return;
 
@@ -187,6 +198,12 @@ async function loadUserProfile() {
       appState.userPlan = doc.plan || 'free';
     }
     appState.emailVerified = !!account?.emailVerified;
+    writeCache(PROFILE_CACHE_KEY, {
+      userName: appState.userName,
+      userWatchlist: appState.userWatchlist,
+      userPlan: appState.userPlan,
+      emailVerified: appState.emailVerified,
+    });
   } catch (error) {
     console.warn('Could not load user profile:', error);
   }
@@ -335,29 +352,38 @@ async function initApp() {
   const now = Math.floor(Date.now() / 1000);
   const monthAgo = now - 30 * SECONDS_PER_DAY;
 
-  // Show placeholder market data right away, but wait for the signed-in
-  // user's own profile and portfolio first — trade.html only ever renders
-  // once (see its container.dataset.loaded guard), so it needs real
-  // portfolio data on that first render, not a later one.
+  // Show placeholder data right away so the page isn't blank while data loads
   appState.marketRows = FALLBACK_MARKET_ROWS;
 
-  // The uid is already known locally (no network needed), so profile and
-  // portfolio can both be fetched from Firestore at the same time instead
-  // of one after the other — cuts this wait roughly in half.
+  // The uid is already known locally (no network needed)
   const auth = getStoredAuth();
   if (auth) appState.uid = auth.uid;
-  await Promise.all([
-    withTimeout(loadUserProfile(), 5000),
-    withTimeout(loadPortfolio(), 5000),
-  ]);
+
+  // trade.html only renders once (see renderTradePage's dataset.loaded
+  // guard), so it needs real data before that render. Every other page
+  // renders instantly with placeholder data and updates once it arrives.
+  if (page === 'trade') {
+    await withTimeout(Promise.all([loadUserProfile(), loadPortfolio()]), 5000);
+  }
 
   updateGreeting();
   renderCurrentPage(now, monthAgo);
   bindInteractions();
   bindPortfolioSync();
-  injectVerifyBanner();
 
-  // Fetch market/news/location data in the background, then update the page
+  // Firestore is usually quick — update the page as soon as it's ready,
+  // without waiting on the slower market data/news calls below.
+  if (page !== 'trade') {
+    withTimeout(Promise.all([loadUserProfile(), loadPortfolio()]), 8000).then(() => {
+      renderCurrentPage(now, monthAgo);
+      bindInteractions();
+      updateGreeting();
+      injectVerifyBanner();
+    });
+  }
+
+  // Market data, news, and location come from separate external APIs and
+  // can take longer — update the page again once those are ready too.
   Promise.all([
     withTimeout(initGeolocation(), 6000),
     withTimeout(fetchMarketData(), 8000),

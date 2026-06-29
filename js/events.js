@@ -8,7 +8,19 @@ import { appState } from './state.js';
 import { renderWatchlist, renderProPlanStatus } from './pages.js';
 import { clearAuth } from './firebaseAuth.js';
 import { addToWatchlist, removeFromWatchlist, createOrder, updateUserPlan } from './db.js';
-import { FREE_WATCHLIST_LIMIT } from './config.js';
+import { FREE_WATCHLIST_LIMIT, PROFILE_CACHE_KEY, PORTFOLIO_CACHE_KEY } from './config.js';
+import { writeCache, clearCache } from './cache.js';
+
+// Save the profile fields to the same cache main.js reads on the next page,
+// so a watchlist toggle or plan upgrade here doesn't get overwritten by old cached data.
+function saveProfileCache() {
+  writeCache(PROFILE_CACHE_KEY, {
+    userName: appState.userName,
+    userWatchlist: appState.userWatchlist,
+    userPlan: appState.userPlan,
+    emailVerified: appState.emailVerified,
+  });
+}
 
 // Listen for clicks anywhere on the page and handle any [data-action] button.
 // Using event delegation means we don't need to re-bind when new buttons are
@@ -87,8 +99,12 @@ function handleAction(button) {
     }
 
     case "logout":
-      // Clear the stored Firebase tokens, then let the link's normal href take the user to signin.html
+      // Clear the stored Firebase tokens and cached data, then let the
+      // link's normal href take the user to signin.html — without this,
+      // the next sign-in could briefly show the previous account's data
       clearAuth();
+      clearCache(PROFILE_CACHE_KEY);
+      clearCache(PORTFOLIO_CACHE_KEY);
       break;
   }
 }
@@ -123,6 +139,7 @@ async function toggleWatchlistSymbol(symbol) {
       btn.textContent = nowIn ? '★' : '☆';
     });
     if (document.getElementById('watchlist-container')) renderWatchlist();
+    saveProfileCache();
   } catch (error) {
     showToast(error.message);
   }
@@ -146,6 +163,7 @@ async function startProCheckout() {
     });
     await updateUserPlan(appState.uid, 'pro');
     appState.userPlan = 'pro';
+    saveProfileCache();
     renderProPlanStatus(sessionId);
     showToast('Upgrade confirmed — welcome to AssetsX Pro.');
   } catch (error) {
