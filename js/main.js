@@ -385,7 +385,7 @@ async function initApp() {
   // Market data, news, and location come from separate external APIs and
   // can take longer — update the page again once those are ready too.
   Promise.all([
-    withTimeout(initGeolocation(), 6000),
+    withTimeout(initGeolocation(), 8000),
     withTimeout(fetchMarketData(), 8000),
     withTimeout(fetchGeneralNews(), 8000),
   ]).then(() => {

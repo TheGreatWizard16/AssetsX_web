@@ -297,8 +297,46 @@ function updateHeaderSubtitle() {
   }
 }
 
-// Detect the user's location from their IP address and show it in the header.
-// We cache the result so the API is only called once per browser session.
+// Ask the browser for the device's real location (GPS/WiFi) — much more
+// accurate than guessing from the IP address, but the user has to allow it.
+function getBrowserCoords() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation not supported'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => resolve(position.coords),
+      reject,
+      { timeout: 5000 }
+    );
+  });
+}
+
+// Turn GPS coordinates into a city name using OpenStreetMap's free Nominatim API
+async function reverseGeocode(latitude, longitude) {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  const address = data.address || {};
+  const city = address.city || address.town || address.village || address.municipality;
+  if (!city) throw new Error('No city in reverse geocode result');
+  return `${city}, ${(address.country_code || '').toUpperCase()}`;
+}
+
+// Guess the city from the visitor's IP address — less accurate than GPS, but
+// doesn't need permission, so this is the fallback if GPS is denied or unavailable.
+async function getLocationFromIP() {
+  const response = await fetch('https://ipapi.co/json/');
+  const data = await response.json();
+  if (!data.city) throw new Error('No city in IP lookup result');
+  return `${data.city}, ${data.country_code}`;
+}
+
+// Detect the user's real location and show it in the header: try the
+// browser's GPS first (accurate, needs permission), fall back to guessing
+// from the IP address if that's denied. Cached so this only runs once per
+// browser session, not on every page.
 export async function initGeolocation() {
   try {
     const cachedLocation = sessionStorage.getItem('assetsx_user_location');
@@ -308,14 +346,14 @@ export async function initGeolocation() {
       return;
     }
 
-    const response = await fetch('https://ipapi.co/json/');
-    const data = await response.json();
-
-    if (data.city) {
-      appState.userLocation = `${data.city}, ${data.country_code}`;
-      sessionStorage.setItem('assetsx_user_location', appState.userLocation);
+    try {
+      const { latitude, longitude } = await getBrowserCoords();
+      appState.userLocation = await reverseGeocode(latitude, longitude);
+    } catch {
+      appState.userLocation = await getLocationFromIP();
     }
 
+    sessionStorage.setItem('assetsx_user_location', appState.userLocation);
     updateHeaderSubtitle();
   } catch (error) {
     console.warn("Could not detect location:", error);
